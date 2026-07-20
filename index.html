@@ -9,28 +9,27 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
         h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.5rem; }
-        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px; box-sizing: border-box; font-size: 18px; text-align: center; outline: none; transition: border-color 0.3s; }
+        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: border-color 0.3s; }
         input:focus { border-color: var(--primary); }
-        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.3s; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.3s; margin-top: 5px; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
         .name-label { font-size: 1.2rem; font-weight: bold; display: block; margin-bottom: 12px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; color: #475569; }
-        .info-row b { color: #1e293b; }
         
-        /* ORTAK DURUM KUTUSU STİLİ */
+        /* DURUM / İŞLETME UYARI KUTUSU */
         .status-box { 
             margin-top: 15px; 
-            padding: 12px; 
+            padding: 14px; 
             border-radius: 10px; 
             text-align: center; 
             font-weight: 900; 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             color: #dc2626; 
             background: #fef2f2; 
             border: 2px solid #fecaca; 
             text-transform: uppercase;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -39,14 +38,18 @@
 <div class="card">
     <h2>Öğrenci Sorgulama</h2>
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
-    <input type="text" id="tcInput" placeholder="T.C. Kimlik No" maxlength="11">
+    
+    <!-- 2 ADET GİRİŞ ALANI -->
+    <input type="text" id="tcSon2Input" placeholder="T.C. Kimlik No (Son 2 Hanesi)" maxlength="2">
+    <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
+    
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
     <div id="sonuc"></div>
 </div>
 
 <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?gid=0&single=true&output=csv';
-    let ogrenciData = {};
+    let ogrenciListesi = [];
 
     function csvToArray(text) {
         let cleanText = text.replace(/\r/g, "");
@@ -70,23 +73,28 @@
                 if (index === 0) return;
                 
                 if (sutun && sutun.length >= 2) {
-                    const tc = sutun[0]?.trim();
-                    const ad = sutun[1]?.trim();
-                    const okulDev = sutun[2]?.trim() || "0";
-                    const isyeriDev = sutun[3]?.trim() || "0"; 
-                    const durum = sutun[4]?.trim() || "BİLGİ YOK"; 
+                    const tc = sutun[0]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "";
+                    const ad = sutun[2]?.trim() || "";
+                    const devamsizlik = sutun[4]?.trim() || "BİLGİ YOK"; 
                     
-                    // G Sütunu kontrolü (İndeks: 6)
-                    const ekBilgi = (sutun.length > 6 && sutun[6]) ? sutun[6].trim() : ""; 
+                    // İşletme Sütunu (7. Sütun - İndeks 6)
+                    const isletme = (sutun.length > 6 && sutun[6]) ? sutun[6].trim() : ""; 
+                    // İşten Ayrılış / İşe Giriş Tarihi Sütunu (8. Sütun - İndeks 7)
+                    const tarih = (sutun.length > 7 && sutun[7]) ? sutun[7].trim() : "";
+                    
+                    // T.C. Kimlik numarasının son 2 hanesini alma
+                    const tcSon2 = tc.length >= 2 ? tc.slice(-2) : tc;
                     
                     if(tc) {
-                        ogrenciData[tc] = { 
+                        ogrenciListesi.push({ 
+                            tcSon2: tcSon2,
+                            ogrNo: ogrNo,
                             ad: ad, 
-                            okul: okulDev, 
-                            isyeri: isyeriDev,
-                            durum: durum,
-                            ekBilgi: ekBilgi 
-                        };
+                            devamsizlik: devamsizlik,
+                            isletme: isletme,
+                            tarih: tarih
+                        });
                     }
                 }
             });
@@ -98,36 +106,43 @@
     }
 
     function sorgula() {
-        const input = document.getElementById('tcInput').value.trim();
+        const tcSon2Input = document.getElementById('tcSon2Input').value.trim();
+        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
         const sonucDiv = document.getElementById('sonuc');
         
-        if (ogrenciData[input]) {
-            const ogrenci = ogrenciData[input];
+        // Eşleşen öğrenci kontrolü
+        const ogrenci = ogrenciListesi.find(o => o.tcSon2 === tcSon2Input && o.ogrNo === ogrNoInput);
+        
+        if (ogrenci) {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "#fff";
             
-            // Kutuda gösterilecek metni seçiyoruz (Öncelik G Sütununda)
-            let gosterilecekDurum = "";
-            if (ogrenci.ekBilgi && ogrenci.ekBilgi !== "") {
-                gosterilecekDurum = ogrenci.ekBilgi; // G sütunu doluysa onu al
-            } else {
-                gosterilecekDurum = ogrenci.durum;    // G sütunu boşsa normal Durumu al
+            let gosterilecekMetin = "";
+            
+            // KOŞUL 1: İşletme sütunu doluysa direkt onu göster
+            if (ogrenci.isletme && ogrenci.isletme !== "") {
+                gosterilecekMetin = ogrenci.isletme;
+            } 
+            // KOŞUL 2: İşletme sütunu boşsa "KAYITLI İŞLETME YOK" + Tarih göster
+            else {
+                let tarihBilgisi = ogrenci.tarih ? ` (${ogrenci.tarih})` : "";
+                gosterilecekMetin = "KAYITLI İŞLETME YOK" + tarihBilgisi;
             }
             
             sonucDiv.innerHTML = `
                 <span class="name-label">${ogrenci.ad}</span>
-                <div class="info-row"><span>Okul Devamsızlık:</span> <b>${ogrenci.okul} GÜN</b></div>
-                <div class="info-row"><span>İşyeri Devamsızlık:</span> <b>${ogrenci.isyeri} GÜN</b></div>
-                <div class="status-box">${gosterilecekDurum}</div>
+                <div class="status-box">${gosterilecekMetin}</div>
             `;
         } else {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI -DEVAMSIZLIK SAYINIZ 2'DEN AZ İSE GÖRÜNMEZ!- </div>";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. SON 2 HANESİ VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
         }
     }
 
-    document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('tcSon2Input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('ogrNoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    
     verileriGetir();
 </script>
 
