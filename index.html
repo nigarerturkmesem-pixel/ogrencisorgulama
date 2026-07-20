@@ -6,8 +6,8 @@
     <title>Öğrenci Sorgulama Paneli</title>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
+        .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
         h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.5rem; }
         input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: border-color 0.3s; }
         input:focus { border-color: var(--primary); }
@@ -15,22 +15,16 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
-        .name-label { font-size: 1.2rem; font-weight: bold; display: block; margin-bottom: 12px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .name-label { font-size: 1.25rem; font-weight: bold; display: block; margin-bottom: 15px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
         
-        /* DURUM / İŞLETME UYARI KUTUSU */
-        .status-box { 
-            margin-top: 15px; 
-            padding: 14px; 
-            border-radius: 10px; 
-            text-align: center; 
-            font-weight: 900; 
-            font-size: 1.1rem; 
-            color: #dc2626; 
-            background: #fef2f2; 
-            border: 2px solid #fecaca; 
-            text-transform: uppercase;
-            line-height: 1.4;
-        }
+        /* BİLGİ SATIRLARI DÜZENİ */
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.95rem; color: #475569; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row span { font-weight: 600; color: #64748b; }
+        .info-row b { color: #0f172a; text-align: right; max-width: 60%; word-break: break-word; }
+        
+        /* UYARI VE VURGULU METİN DÜZENİ */
+        .alert-text { color: #dc2626; font-weight: 900; }
     </style>
 </head>
 <body>
@@ -39,7 +33,7 @@
     <h2>Öğrenci Sorgulama</h2>
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
-    <!-- 2 ADET GİRİŞ ALANI -->
+    <!-- GİRİŞ ALANLARI -->
     <input type="text" id="tcSon2Input" placeholder="T.C. Kimlik No (Son 2 Hanesi)" maxlength="2">
     <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
     
@@ -76,24 +70,27 @@
                     const tc = sutun[0]?.trim() || "";
                     const ogrNo = sutun[1]?.trim() || "";
                     const ad = sutun[2]?.trim() || "";
-                    const devamsizlik = sutun[4]?.trim() || "BİLGİ YOK"; 
+                    const sube = sutun[3]?.trim() || "-";
+                    const devamsizlik = sutun[4]?.trim() || "-";
+                    const ogretmen = sutun[5]?.trim() || "-";
+                    const isletme = sutun[6]?.trim() || "";
+                    const iseGiris = sutun[7]?.trim() || "-";
+                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
                     
-                    // İşletme Sütunu (7. Sütun - İndeks 6)
-                    const isletme = (sutun.length > 6 && sutun[6]) ? sutun[6].trim() : ""; 
-                    // İşten Ayrılış / İşe Giriş Tarihi Sütunu (8. Sütun - İndeks 7)
-                    const tarih = (sutun.length > 7 && sutun[7]) ? sutun[7].trim() : "";
-                    
-                    // T.C. Kimlik numarasının son 2 hanesini alma
                     const tcSon2 = tc.length >= 2 ? tc.slice(-2) : tc;
                     
                     if(tc) {
                         ogrenciListesi.push({ 
+                            tc: tc,
                             tcSon2: tcSon2,
                             ogrNo: ogrNo,
                             ad: ad, 
+                            sube: sube,
                             devamsizlik: devamsizlik,
+                            ogretmen: ogretmen,
                             isletme: isletme,
-                            tarih: tarih
+                            iseGiris: iseGiris,
+                            istenCikis: istenCikis
                         });
                     }
                 }
@@ -110,28 +107,29 @@
         const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
         const sonucDiv = document.getElementById('sonuc');
         
-        // Eşleşen öğrenci kontrolü
         const ogrenci = ogrenciListesi.find(o => o.tcSon2 === tcSon2Input && o.ogrNo === ogrNoInput);
         
         if (ogrenci) {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "#fff";
             
-            let gosterilecekMetin = "";
-            
-            // KOŞUL 1: İşletme sütunu doluysa direkt onu göster
-            if (ogrenci.isletme && ogrenci.isletme !== "") {
-                gosterilecekMetin = ogrenci.isletme;
-            } 
-            // KOŞUL 2: İşletme sütunu boşsa "KAYITLI İŞLETME YOK" + Tarih göster
-            else {
-                let tarihBilgisi = ogrenci.tarih ? ` (${ogrenci.tarih})` : "";
-                gosterilecekMetin = "KAYITLI İŞLETME YOK" + tarihBilgisi;
+            // İşletme durum kontrolü
+            let isletmeMetni = ogrenci.isletme;
+            if (!isletmeMetni || isletmeMetni === "") {
+                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${ogrenci.istenCikis})` : "";
+                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
             }
-            
+
             sonucDiv.innerHTML = `
                 <span class="name-label">${ogrenci.ad}</span>
-                <div class="status-box">${gosterilecekMetin}</div>
+                <div class="info-row"><span>T.C. No:</span> <b>${ogrenci.tc}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenci.ogrNo}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${ogrenci.sube}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenci.devamsizlik}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${ogrenci.ogretmen}</b></div>
+                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenci.iseGiris}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenci.istenCikis}</b></div>
             `;
         } else {
             sonucDiv.style.display = "block";
