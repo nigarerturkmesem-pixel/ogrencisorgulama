@@ -34,7 +34,7 @@
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
     <!-- GİRİŞ ALANLARI -->
-    <input type="text" id="tcSon2Input" placeholder="T.C. Kimlik No (Son 2 Hanesi)" maxlength="2">
+    <input type="text" id="tcInput" placeholder="T.C. Kimlik No" maxlength="11">
     <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
     
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
@@ -77,12 +77,13 @@
                     const iseGiris = sutun[7]?.trim() || "-";
                     const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
                     
-                    const tcSon2 = tc.length >= 2 ? tc.slice(-2) : tc;
+                    // Tablodaki T.C.'den ilk 2 ve son 2 haneyi alır
+                    const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
                     
                     if(tc) {
                         ogrenciListesi.push({ 
                             tc: tc,
-                            tcSon2: tcSon2,
+                            tcAnahtar: tcAnahtar,
                             ogrNo: ogrNo,
                             ad: ad, 
                             sube: sube,
@@ -103,11 +104,14 @@
     }
 
     function sorgula() {
-        const tcSon2Input = document.getElementById('tcSon2Input').value.trim();
+        const girilenTc = document.getElementById('tcInput').value.trim();
         const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
         const sonucDiv = document.getElementById('sonuc');
         
-        const ogrenci = ogrenciListesi.find(o => o.tcSon2 === tcSon2Input && o.ogrNo === ogrNoInput);
+        // Kullanıcının girdiği T.C.'den otomatik ilk 2 ve son 2 haneyi alır
+        const girilenTcAnahtar = girilenTc.length >= 4 ? (girilenTc.slice(0, 2) + girilenTc.slice(-2)) : girilenTc;
+        
+        const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
         
         if (ogrenci) {
             sonucDiv.style.display = "block";
@@ -134,11 +138,11 @@
         } else {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. SON 2 HANESİ VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. KİMLİK NO VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
         }
     }
 
-    document.getElementById('tcSon2Input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
     document.getElementById('ogrNoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
     
     verileriGetir();
