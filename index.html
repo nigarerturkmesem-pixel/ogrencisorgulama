@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Öğrenci Sorgulama Paneli</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --danger: #fee2e2; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
         .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
         h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.5rem; }
@@ -17,11 +17,13 @@
         #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
         .name-label { font-size: 1.25rem; font-weight: bold; display: block; margin-bottom: 15px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
         
+        /* BİLGİ SATIRLARI DÜZENİ */
         .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.95rem; color: #475569; }
         .info-row:last-child { border-bottom: none; }
         .info-row span { font-weight: 600; color: #64748b; }
         .info-row b { color: #0f172a; text-align: right; max-width: 60%; word-break: break-word; }
         
+        /* UYARI VE VURGULU METİN DÜZENİ */
         .alert-text { color: #dc2626; font-weight: 900; }
     </style>
 </head>
@@ -31,36 +33,17 @@
     <h2>Öğrenci Sorgulama</h2>
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
-    <input type="text" id="tcInput" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
+    <!-- GİRİŞ ALANLARI -->
+    <input type="text" id="tcSon2Input" placeholder="T.C. Kimlik No (Son 2 Hanesi)" maxlength="2">
+    <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
     
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
     <div id="sonuc"></div>
 </div>
 
 <script>
-    // 1. SAYFA (TC -> Ad Soyad)
-    const url1 = 'https://docs.google.com/spreadsheets/d/1RiOIXMZct2weorvIpMlb9esRcis66r_S3pq1mdzx59U/pub?output=csv';
-
-    // 2. SAYFA (Ad Soyad -> Detay Bilgileri)
-    const url2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?output=csv';
-
-    let tcMap = {};       // TC -> İsim
-    let detayMap = {};   // İsim -> Tüm Detaylar
-
-    // İsimlerdeki harf/boşluk farklarını sıfırlamak için temizleme fonksiyonu
-    function metniStandardizeEt(text) {
-        if (!text) return "";
-        return text.toString()
-            .replace(/^"|"$/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLocaleUpperCase('tr-TR');
-    }
-
-    function tcTemizle(text) {
-        if (!text) return "";
-        return text.toString().replace(/[^0-9]/g, '').trim();
-    }
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?output=csv';
+    let ogrenciListesi = [];
 
     function csvToArray(text) {
         let cleanText = text.replace(/\r/g, "");
@@ -75,149 +58,88 @@
     }
 
     async function verileriGetir() {
-        const statusDiv = document.getElementById('status');
         try {
-            // 1. SAYFADAN TC VE İSİMLERİ AL
-            const res1 = await fetch(url1);
-            if (!res1.ok) throw new Error("1. Sayfaya ulaşılamadı.");
-            const data1 = await res1.text();
-            const satirlar1 = csvToArray(data1);
-
-            satirlar1.forEach((sutun, index) => {
-                if (index === 0 || !sutun) return;
+            const res = await fetch(csvUrl);
+            const data = await res.text();
+            const satirlar = csvToArray(data);
+            
+            satirlar.forEach((sutun, index) => {
+                if (index === 0) return;
                 
-                let tc = "";
-                let isim = "";
-
-                sutun.forEach(hucre => {
-                    let temTc = tcTemizle(hucre);
-                    if (temTc.length === 11 && !tc) {
-                        tc = temTc;
-                    } else if (hucre && hucre.trim().length > 2 && !isim && !tcTemizle(hucre)) {
-                        isim = metniStandardizeEt(hucre);
-                    }
-                });
-
-                if (tc && isim) {
-                    tcMap[tc] = isim;
-                }
-            });
-
-            // 2. SAYFADAN İSİME GÖRE DETAYLARI AL
-            const res2 = await fetch(url2);
-            if (!res2.ok) throw new Error("2. Sayfaya ulaşılamadı.");
-            const data2 = await res2.text();
-            const satirlar2 = csvToArray(data2);
-
-            satirlar2.forEach((sutun, index) => {
-                if (index === 0 || !sutun || sutun.length < 2) return;
-
-                // 2. sayfada ismi olan satırı bul ve haritasını çıkar
-                let hamAd = "";
-                // Genellikle isim 2. veya 3. sütunda bulunur
-                for (let i = 0; i < sutun.length; i++) {
-                    let h = sutun[i]?.replace(/^"|"$/g, '').trim();
-                    if (h && isNaN(h) && h.length > 2 && !h.includes("/")) {
-                        hamAd = h;
-                        break;
-                    }
-                }
-
-                if (hamAd) {
-                    const anahtarIsim = metniStandardizeEt(hamAd);
+                if (sutun && sutun.length >= 2) {
+                    const tc = sutun[0]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "";
+                    const ad = sutun[2]?.trim() || "";
+                    const sube = sutun[3]?.trim() || "-";
+                    const devamsizlik = sutun[4]?.trim() || "-";
+                    const ogretmen = sutun[5]?.trim() || "-";
+                    const isletme = sutun[6]?.trim() || "";
+                    const iseGiris = sutun[7]?.trim() || "-";
+                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
                     
-                    const ogrNo = sutun[1]?.replace(/^"|"$/g, '').trim() || "-";
-                    const sube = sutun[3]?.replace(/^"|"$/g, '').trim() || "-";
-                    const devamsizlik = sutun[4]?.replace(/^"|"$/g, '').trim() || "-";
-                    const ogretmen = sutun[5]?.replace(/^"|"$/g, '').trim() || "-";
-                    const isletme = sutun[6]?.replace(/^"|"$/g, '').trim() || "";
-                    const iseGiris = sutun[7]?.replace(/^"|"$/g, '').trim() || "-";
-                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].replace(/^"|"$/g, '').trim() : "-";
-
-                    detayMap[anahtarIsim] = {
-                        orijinalAd: hamAd,
-                        ogrNo: ogrNo,
-                        sube: sube,
-                        devamsizlik: devamsizlik,
-                        ogretmen: ogretmen,
-                        isletme: isletme,
-                        iseGiris: iseGiris,
-                        istenCikis: istenCikis
-                    };
+                    const tcSon2 = tc.length >= 2 ? tc.slice(-2) : tc;
+                    
+                    if(tc) {
+                        ogrenciListesi.push({ 
+                            tc: tc,
+                            tcSon2: tcSon2,
+                            ogrNo: ogrNo,
+                            ad: ad, 
+                            sube: sube,
+                            devamsizlik: devamsizlik,
+                            ogretmen: ogretmen,
+                            isletme: isletme,
+                            iseGiris: iseGiris,
+                            istenCikis: istenCikis
+                        });
+                    }
                 }
             });
-
-            statusDiv.style.color = "#16a34a";
-            statusDiv.innerHTML = "● Sistem Hazır";
+            document.getElementById('status').innerHTML = "● Sistem Hazır";
             document.getElementById('sorgulaBtn').disabled = false;
-
         } catch (e) {
-            statusDiv.style.color = "#dc2626";
-            statusDiv.innerText = "Bağlantı Hatası: " + e.message;
+            document.getElementById('status').innerText = "Bağlantı Hatası!";
         }
     }
 
     function sorgula() {
-        const tcInput = tcTemizle(document.getElementById('tcInput').value);
+        const tcSon2Input = document.getElementById('tcSon2Input').value.trim();
+        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
         const sonucDiv = document.getElementById('sonuc');
         
-        if (tcInput.length !== 11) {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ Lütfen 11 haneli T.C. No giriniz.</div>";
-            return;
-        }
-
-        // 1. AŞAMA: 1. Sayfadan T.C. karşılığı İsim bulundu mu?
-        const bulunanIsim = tcMap[tcInput];
-
-        if (!bulunanIsim) {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI<br><span style='font-size:12px; font-weight:normal;'>Bu T.C. numarası 1. sayfada kayıtlı değil.</span></div>";
-            return;
-        }
-
-        // 2. AŞAMA: 1. Sayfada bulunan İsim ile 2. Sayfadan Detaylar çekildi mi?
-        const detay = detayMap[bulunanIsim];
-
-        if (detay) {
+        const ogrenci = ogrenciListesi.find(o => o.tcSon2 === tcSon2Input && o.ogrNo === ogrNoInput);
+        
+        if (ogrenci) {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "#fff";
             
-            let isletmeMetni = detay.isletme;
+            // İşletme durum kontrolü
+            let isletmeMetni = ogrenci.isletme;
             if (!isletmeMetni || isletmeMetni === "") {
-                let cikisTarihi = detay.istenCikis !== "-" ? ` (${detay.istenCikis})` : "";
+                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${ogrenci.istenCikis})` : "";
                 isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
             }
 
             sonucDiv.innerHTML = `
-                <span class="name-label">${detay.orijinalAd}</span>
-                <div class="info-row"><span>T.C. No:</span> <b>${tcInput}</b></div>
-                <div class="info-row"><span>Öğrenci No:</span> <b>${detay.ogrNo}</b></div>
-                <div class="info-row"><span>Şube:</span> <b>${detay.sube}</b></div>
-                <div class="info-row"><span>Devamsızlık:</span> <b>${detay.devamsizlik}</b></div>
-                <div class="info-row"><span>Öğretmen:</span> <b>${detay.ogretmen}</b></div>
+                <span class="name-label">${ogrenci.ad}</span>
+                <div class="info-row"><span>T.C. No:</span> <b>${ogrenci.tc}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenci.ogrNo}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${ogrenci.sube}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenci.devamsizlik}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${ogrenci.ogretmen}</b></div>
                 <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
-                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${detay.iseGiris}</b></div>
-                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${detay.istenCikis}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenci.iseGiris}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenci.istenCikis}</b></div>
             `;
         } else {
-            // T.C. 1. Sayfada var ama 2. Sayfada isim yazılışı tamamen farklıysa gösterilecek hata
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = `
-                <div style='text-align:center; color:#991b1b; font-weight:bold;'>
-                    ❌ 2. SAYFADA BULUNAMADI<br>
-                    <span style='font-size:12px; font-weight:normal; color:#450a0a;'>
-                        1. Sayfadaki İsim: <b>${bulunanIsim}</b><br>
-                        (Bu isim 2. sayfadaki öğrenci listesinde eşleşmedi)
-                    </span>
-                </div>`;
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. SON 2 HANESİ VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
         }
     }
 
-    document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('tcSon2Input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('ogrNoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
     
     verileriGetir();
 </script>
