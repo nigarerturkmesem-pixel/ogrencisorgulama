@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Öğrenci Sorgulama Paneli</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --danger: #fee2e2; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
         .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
         h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.5rem; }
@@ -31,27 +31,26 @@
     <h2>Öğrenci Sorgulama</h2>
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
-    <!-- GİRİŞ ALANLARI -->
+    <!-- SADECE T.C. GİRİŞ ALANI -->
     <input type="text" id="tcInput" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
-    <input type="text" id="adInput" placeholder="Öğrenci Ad Soyad">
     
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
     <div id="sonuc"></div>
 </div>
 
 <script>
-    // 1. SAYFA LINKI (T.C. No ve Öğrenci Adlarının Olduğu Sayfa)
-    const csvUrl_Sayfa1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?gid=0&single=true&output=csv';
+    // 1. SAYFA LINKI (TC -> Ad Soyad Eşleşmesi)
+    const csvUrl_Sayfa1 = 'https://docs.google.com/spreadsheets/d/1RiOIXMZct2weorvIpMlb9esRcis66r_S3pq1mdzx59U/gviz/tq?tqx=out:csv';
     
-    // 2. SAYFA LINKI (Öğrencilerin Tüm Detay Bilgilerinin Olduğu Sayfa)
-    const csvUrl_Sayfa2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?output=csv';
+    // 2. SAYFA LINKI (Ad Soyad -> Detay Bilgileri)
+    const csvUrl_Sayfa2 = 'https://docs.google.com/spreadsheets/d/1GaV5H24IxzAwkTMSWysmSzRfROFPRWt1CD93XH1OcrA/gviz/tq?tqx=out:csv';
 
-    let tcListesi = {};       // TC -> Ad Soyad Eşleşmesi
-    let detayListesi = {};   // Ad Soyad -> Tüm Detay Bilgileri
+    let tcListesi = {};       // TC -> Ad Soyad
+    let detayListesi = {};   // Temizlenmiş Ad Soyad -> Tüm Detay Bilgileri
 
     function metniTemizle(text) {
         if(!text) return "";
-        return text.trim().toLocaleUpperCase('tr-TR');
+        return text.replace(/^"|"$/g, '').trim().toLocaleUpperCase('tr-TR');
     }
 
     function csvToArray(text) {
@@ -68,14 +67,14 @@
 
     async function verileriGetir() {
         try {
-            // 1. SAYFADAN VERİ ÇEKME
+            // 1. SAYFADAN T.C. VE İSİMLERİ ÇEKME
             const res1 = await fetch(csvUrl_Sayfa1);
             const data1 = await res1.text();
             const satirlar1 = csvToArray(data1);
             
             satirlar1.forEach((sutun, index) => {
                 if (index === 0) return;
-                const tc = sutun[0]?.trim();                 
+                const tc = sutun[0]?.replace(/^"|"$/g, '').trim();                 
                 const ad = metniTemizle(sutun[1] || sutun[2]); 
                 
                 if (tc) {
@@ -83,7 +82,7 @@
                 }
             });
 
-            // 2. SAYFADAN VERİ ÇEKME
+            // 2. SAYFADAN ÖĞRENCİ DETAYLARINI ÇEKME
             const res2 = await fetch(csvUrl_Sayfa2);
             const data2 = await res2.text();
             const satirlar2 = csvToArray(data2);
@@ -91,19 +90,20 @@
             satirlar2.forEach((sutun, index) => {
                 if (index === 0) return;
                 if (sutun && sutun.length >= 2) {
-                    const ogrNo = sutun[1]?.trim() || "-";
-                    const ad = metniTemizle(sutun[2]); 
-                    const sube = sutun[3]?.trim() || "-";
-                    const devamsizlik = sutun[4]?.trim() || "-";
-                    const ogretmen = sutun[5]?.trim() || "-";
-                    const isletme = sutun[6]?.trim() || "";
-                    const iseGiris = sutun[7]?.trim() || "-";
-                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
+                    const ogrNo = sutun[1]?.replace(/^"|"$/g, '').trim() || "-";
+                    const hamAd = sutun[2]?.replace(/^"|"$/g, '').trim();
+                    const ad = metniTemizle(hamAd); 
+                    const sube = sutun[3]?.replace(/^"|"$/g, '').trim() || "-";
+                    const devamsizlik = sutun[4]?.replace(/^"|"$/g, '').trim() || "-";
+                    const ogretmen = sutun[5]?.replace(/^"|"$/g, '').trim() || "-";
+                    const isletme = sutun[6]?.replace(/^"|"$/g, '').trim() || "";
+                    const iseGiris = sutun[7]?.replace(/^"|"$/g, '').trim() || "-";
+                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].replace(/^"|"$/g, '').trim() : "-";
 
                     if(ad) {
                         detayListesi[ad] = {
                             ogrNo: ogrNo,
-                            orijinalAd: sutun[2]?.trim(),
+                            orijinalAd: hamAd,
                             sube: sube,
                             devamsizlik: devamsizlik,
                             ogretmen: ogretmen,
@@ -124,13 +124,12 @@
 
     function sorgula() {
         const tcInput = document.getElementById('tcInput').value.trim();
-        const adInput = metniTemizle(document.getElementById('adInput').value);
         const sonucDiv = document.getElementById('sonuc');
         
         // 1. KONTROL: TC No 1. Sayfada kayıtlı mı?
         const kayitliAd = tcListesi[tcInput];
 
-        // EĞER 1. SAYFADA TC VEYA ÖĞRENCİ HİÇ YOKSA
+        // EĞER 1. SAYFADA T.C. HİÇ YOKSA "KAYIT BULUNAMADI"
         if (!kayitliAd) {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
@@ -138,40 +137,32 @@
             return;
         }
 
-        // İsim kontrolü (Girilmişse doğrulanır, girilmemişse TC eşleşmesi yeterli sayılır)
-        if (kayitliAd === adInput || adInput === "") {
+        // 2. KONTROL: 1. Sayfadan bulunan isimle 2. Sayfadan detay verilerini çekme
+        const ogrenciDetay = detayListesi[kayitliAd];
+
+        if (ogrenciDetay) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "#fff";
             
-            // 2. KONTROL: Öğrencinin Adı 2. Sayfada var mı?
-            const ogrenciDetay = detayListesi[kayitliAd] || detayListesi[adInput];
-
-            if (ogrenciDetay) {
-                sonucDiv.style.display = "block";
-                sonucDiv.style.backgroundColor = "#fff";
-                
-                let isletmeMetni = ogrenciDetay.isletme;
-                if (!isletmeMetni || isletmeMetni === "") {
-                    let cikisTarihi = ogrenciDetay.istenCikis !== "-" ? ` (${ogrenciDetay.istenCikis})` : "";
-                    isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
-                }
-
-                sonucDiv.innerHTML = `
-                    <span class="name-label">${ogrenciDetay.orijinalAd}</span>
-                    <div class="info-row"><span>T.C. No:</span> <b>${tcInput}</b></div>
-                    <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenciDetay.ogrNo}</b></div>
-                    <div class="info-row"><span>Şube:</span> <b>${ogrenciDetay.sube}</b></div>
-                    <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenciDetay.devamsizlik}</b></div>
-                    <div class="info-row"><span>Öğretmen:</span> <b>${ogrenciDetay.ogretmen}</b></div>
-                    <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
-                    <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenciDetay.iseGiris}</b></div>
-                    <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenciDetay.istenCikis}</b></div>
-                `;
-            } else {
-                sonucDiv.style.display = "block";
-                sonucDiv.style.backgroundColor = "var(--danger)";
-                sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI</div>";
+            let isletmeMetni = ogrenciDetay.isletme;
+            if (!isletmeMetni || isletmeMetni === "") {
+                let cikisTarihi = ogrenciDetay.istenCikis !== "-" ? ` (${ogrenciDetay.istenCikis})` : "";
+                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
             }
 
+            sonucDiv.innerHTML = `
+                <span class="name-label">${ogrenciDetay.orijinalAd}</span>
+                <div class="info-row"><span>T.C. No:</span> <b>${tcInput}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenciDetay.ogrNo}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${ogrenciDetay.sube}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenciDetay.devamsizlik}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${ogrenciDetay.ogretmen}</b></div>
+                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenciDetay.iseGiris}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenciDetay.istenCikis}</b></div>
+            `;
         } else {
+            // T.C. 1. Sayfada var ancak 2. Sayfada detayları bulunamadıysa
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
             sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI</div>";
@@ -179,7 +170,6 @@
     }
 
     document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
-    document.getElementById('adInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
     
     verileriGetir();
 </script>
