@@ -80,7 +80,7 @@
                     // Tablodaki T.C.'den ilk 2 ve son 2 haneyi alır
                     const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
                     
-                    if(tc) {
+                    if(tc && ogrNo) {
                         ogrenciListesi.push({ 
                             tc: tc,
                             tcAnahtar: tcAnahtar,
@@ -108,9 +108,26 @@
         const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
         const sonucDiv = document.getElementById('sonuc');
         
-        // Kullanıcının girdiği T.C.'den otomatik ilk 2 ve son 2 haneyi alır
-        const girilenTcAnahtar = girilenTc.length >= 4 ? (girilenTc.slice(0, 2) + girilenTc.slice(-2)) : girilenTc;
+        // 1. KONTROL: Kutular boş bırakılmışsa işlemi durdur
+        if (girilenTc === "" || ogrNoInput === "") {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ LÜTFEN HEM T.C. KİMLİK NO HEM DE ÖĞRENCİ NO GİRİNİZ!</div>";
+            return;
+        }
+
+        // 2. KONTROL: T.C. tam 11 hane girilmemişse durdur
+        if (girilenTc.length !== 11) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
+            return;
+        }
+
+        // Kullanıcının girdiği 11 haneli T.C.'nin ilk 2 ve son 2 hanesi alınır
+        const girilenTcAnahtar = girilenTc.slice(0, 2) + girilenTc.slice(-2);
         
+        // Tam eşleşme kontrolü
         const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
         
         if (ogrenci) {
