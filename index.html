@@ -17,13 +17,11 @@
         #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
         .name-label { font-size: 1.25rem; font-weight: bold; display: block; margin-bottom: 15px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
         
-        /* BİLGİ SATIRLARI DÜZENİ */
         .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.95rem; color: #475569; }
         .info-row:last-child { border-bottom: none; }
         .info-row span { font-weight: 600; color: #64748b; }
         .info-row b { color: #0f172a; text-align: right; max-width: 60%; word-break: break-word; }
         
-        /* UYARI VE VURGULU METİN DÜZENİ */
         .alert-text { color: #dc2626; font-weight: 900; }
     </style>
 </head>
@@ -34,16 +32,27 @@
     <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
     <!-- GİRİŞ ALANLARI -->
-    <input type="text" id="tcSon2Input" placeholder="T.C. Kimlik No (Son 2 Hanesi)" maxlength="2">
-    <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
+    <input type="text" id="tcInput" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
+    <input type="text" id="adInput" placeholder="Öğrenci Ad Soyad">
     
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
     <div id="sonuc"></div>
 </div>
 
 <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?gid=0&single=true&output=csv';
-    let ogrenciListesi = [];
+    // 1. SAYFA LINKI (T.C. No ve Öğrenci Adlarının Olduğu Sayfa)
+    const csvUrl_Sayfa1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?gid=0&single=true&output=csv';
+    
+    // 2. SAYFA LINKI (Öğrencilerin Tüm Detay Bilgilerinin Olduğu Sayfa)
+    const csvUrl_Sayfa2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNIYTSZIgdE8jFsC9s3nA29_Q-Dlp5ytoDxzJ7dhw5FuEig0h9wIjEA4m0It_7vCuVPyd7RoVpjoFj/pub?output=csv';
+
+    let tcListesi = {};       // TC -> Ad Soyad Eşleşmesi
+    let detayListesi = {};   // Ad Soyad -> Tüm Detay Bilgileri
+
+    function metniTemizle(text) {
+        if(!text) return "";
+        return text.trim().toLocaleUpperCase('tr-TR');
+    }
 
     function csvToArray(text) {
         let cleanText = text.replace(/\r/g, "");
@@ -59,87 +68,118 @@
 
     async function verileriGetir() {
         try {
-            const res = await fetch(csvUrl);
-            const data = await res.text();
-            const satirlar = csvToArray(data);
+            // 1. SAYFADAN VERİ ÇEKME
+            const res1 = await fetch(csvUrl_Sayfa1);
+            const data1 = await res1.text();
+            const satirlar1 = csvToArray(data1);
             
-            satirlar.forEach((sutun, index) => {
+            satirlar1.forEach((sutun, index) => {
                 if (index === 0) return;
+                const tc = sutun[0]?.trim();                 
+                const ad = metniTemizle(sutun[1] || sutun[2]); 
                 
+                if (tc) {
+                    tcListesi[tc] = ad;
+                }
+            });
+
+            // 2. SAYFADAN VERİ ÇEKME
+            const res2 = await fetch(csvUrl_Sayfa2);
+            const data2 = await res2.text();
+            const satirlar2 = csvToArray(data2);
+            
+            satirlar2.forEach((sutun, index) => {
+                if (index === 0) return;
                 if (sutun && sutun.length >= 2) {
-                    const tc = sutun[0]?.trim() || "";
-                    const ogrNo = sutun[1]?.trim() || "";
-                    const ad = sutun[2]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "-";
+                    const ad = metniTemizle(sutun[2]); 
                     const sube = sutun[3]?.trim() || "-";
                     const devamsizlik = sutun[4]?.trim() || "-";
                     const ogretmen = sutun[5]?.trim() || "-";
                     const isletme = sutun[6]?.trim() || "";
                     const iseGiris = sutun[7]?.trim() || "-";
                     const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
-                    
-                    const tcSon2 = tc.length >= 2 ? tc.slice(-2) : tc;
-                    
-                    if(tc) {
-                        ogrenciListesi.push({ 
-                            tc: tc,
-                            tcSon2: tcSon2,
+
+                    if(ad) {
+                        detayListesi[ad] = {
                             ogrNo: ogrNo,
-                            ad: ad, 
+                            orijinalAd: sutun[2]?.trim(),
                             sube: sube,
                             devamsizlik: devamsizlik,
                             ogretmen: ogretmen,
                             isletme: isletme,
                             iseGiris: iseGiris,
                             istenCikis: istenCikis
-                        });
+                        };
                     }
                 }
             });
+
             document.getElementById('status').innerHTML = "● Sistem Hazır";
             document.getElementById('sorgulaBtn').disabled = false;
         } catch (e) {
-            document.getElementById('status').innerText = "Bağlantı Hatası!";
+            document.getElementById('status').innerText = "Veri Bağlantı Hatası!";
         }
     }
 
     function sorgula() {
-        const tcSon2Input = document.getElementById('tcSon2Input').value.trim();
-        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
+        const tcInput = document.getElementById('tcInput').value.trim();
+        const adInput = metniTemizle(document.getElementById('adInput').value);
         const sonucDiv = document.getElementById('sonuc');
         
-        const ogrenci = ogrenciListesi.find(o => o.tcSon2 === tcSon2Input && o.ogrNo === ogrNoInput);
-        
-        if (ogrenci) {
+        // 1. KONTROL: TC No 1. Sayfada kayıtlı mı?
+        const kayitliAd = tcListesi[tcInput];
+
+        // EĞER 1. SAYFADA TC VEYA ÖĞRENCİ HİÇ YOKSA
+        if (!kayitliAd) {
             sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "#fff";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI</div>";
+            return;
+        }
+
+        // İsim kontrolü (Girilmişse doğrulanır, girilmemişse TC eşleşmesi yeterli sayılır)
+        if (kayitliAd === adInput || adInput === "") {
             
-            // İşletme durum kontrolü
-            let isletmeMetni = ogrenci.isletme;
-            if (!isletmeMetni || isletmeMetni === "") {
-                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${ogrenci.istenCikis})` : "";
-                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
+            // 2. KONTROL: Öğrencinin Adı 2. Sayfada var mı?
+            const ogrenciDetay = detayListesi[kayitliAd] || detayListesi[adInput];
+
+            if (ogrenciDetay) {
+                sonucDiv.style.display = "block";
+                sonucDiv.style.backgroundColor = "#fff";
+                
+                let isletmeMetni = ogrenciDetay.isletme;
+                if (!isletmeMetni || isletmeMetni === "") {
+                    let cikisTarihi = ogrenciDetay.istenCikis !== "-" ? ` (${ogrenciDetay.istenCikis})` : "";
+                    isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
+                }
+
+                sonucDiv.innerHTML = `
+                    <span class="name-label">${ogrenciDetay.orijinalAd}</span>
+                    <div class="info-row"><span>T.C. No:</span> <b>${tcInput}</b></div>
+                    <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenciDetay.ogrNo}</b></div>
+                    <div class="info-row"><span>Şube:</span> <b>${ogrenciDetay.sube}</b></div>
+                    <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenciDetay.devamsizlik}</b></div>
+                    <div class="info-row"><span>Öğretmen:</span> <b>${ogrenciDetay.ogretmen}</b></div>
+                    <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                    <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenciDetay.iseGiris}</b></div>
+                    <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenciDetay.istenCikis}</b></div>
+                `;
+            } else {
+                sonucDiv.style.display = "block";
+                sonucDiv.style.backgroundColor = "var(--danger)";
+                sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI</div>";
             }
 
-            sonucDiv.innerHTML = `
-                <span class="name-label">${ogrenci.ad}</span>
-                <div class="info-row"><span>T.C. No:</span> <b>${ogrenci.tc}</b></div>
-                <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenci.ogrNo}</b></div>
-                <div class="info-row"><span>Şube:</span> <b>${ogrenci.sube}</b></div>
-                <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenci.devamsizlik}</b></div>
-                <div class="info-row"><span>Öğretmen:</span> <b>${ogrenci.ogretmen}</b></div>
-                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
-                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenci.iseGiris}</b></div>
-                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenci.istenCikis}</b></div>
-            `;
         } else {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. SON 2 HANESİ VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ KAYIT BULUNAMADI</div>";
         }
     }
 
-    document.getElementById('tcSon2Input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
-    document.getElementById('ogrNoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
+    document.getElementById('adInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
     
     verileriGetir();
 </script>
