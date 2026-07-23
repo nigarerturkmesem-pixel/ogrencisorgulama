@@ -8,7 +8,12 @@
         :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
         .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
-        h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.5rem; }
+        h2 { color: var(--primary); margin-bottom: 5px; font-size: 1.5rem; }
+        
+        /* GÜNCELLEME TARİHİ BİLGİ ALANI */
+        .update-info { font-size: 0.85rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
+        .update-info span { color: #0f172a; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
+
         input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: border-color 0.3s; }
         input:focus { border-color: var(--primary); }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.3s; margin-top: 5px; }
@@ -31,10 +36,11 @@
 
 <div class="card">
     <h2>Öğrenci Sorgulama</h2>
-    <div id="status" style="font-size:12px; margin-bottom:10px; color:#64748b;">Veriler Hazırlanıyor...</div>
+    <div id="guncellemeTarihi" class="update-info">Son Güncelleme: <span id="tarihMetni">Yükleniyor...</span></div>
+    <div id="status" style="font-size:12px; margin-bottom:15px; color:#64748b;">Veriler Hazırlanıyor...</div>
     
     <!-- GİRİŞ ALANLARI -->
-    <input type="text" id="tcInput" placeholder="T.C. Kimlik No" maxlength="11">
+    <input type="text" id="tcInput" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
     <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
     
     <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
@@ -63,6 +69,15 @@
             const data = await res.text();
             const satirlar = csvToArray(data);
             
+            // J2 HÜCRESİNDEN TARİHİ ÇEKER
+            // satirlar[1] = 2. Satır | [9] = 10. Sütun (J Sütunu)
+            if (satirlar.length > 1 && satirlar[1].length > 9) {
+                const j2Tarih = satirlar[1][9]?.trim();
+                document.getElementById('tarihMetni').innerText = j2Tarih || "Belirtilmedi";
+            } else {
+                document.getElementById('tarihMetni').innerText = "-";
+            }
+
             satirlar.forEach((sutun, index) => {
                 if (index === 0) return;
                 
@@ -100,6 +115,7 @@
             document.getElementById('sorgulaBtn').disabled = false;
         } catch (e) {
             document.getElementById('status').innerText = "Bağlantı Hatası!";
+            document.getElementById('tarihMetni').innerText = "Hata";
         }
     }
 
@@ -112,7 +128,7 @@
         if (girilenTc === "" || ogrNoInput === "") {
             sonucDiv.style.display = "block";
             sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ TÜM ALANLARI DOLDURMANIZ GEREKMEKTEDİR!</div>";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ LÜTFEN HEM T.C. KİMLİK NO HEM DE ÖĞRENCİ NO GİRİNİZ!</div>";
             return;
         }
 
