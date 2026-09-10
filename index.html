@@ -3,183 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Sorgulama Paneli</title>
+    <title>T.C. Kimlik No ile Bilgi Sorgulama</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
-        .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
-        h2 { color: var(--primary); margin-bottom: 5px; font-size: 1.5rem; }
-        
-        /* GÜNCELLEME TARİHİ BİLGİ ALANI */
-        .update-info { font-size: 0.85rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
-        .update-info span { color: #0f172a; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
+        /* --- GENEL TASARIM VE TEMA --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
 
-        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: border-color 0.3s; }
-        input:focus { border-color: var(--primary); }
-        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.3s; margin-top: 5px; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
-        .name-label { font-size: 1.25rem; font-weight: bold; display: block; margin-bottom: 15px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        
-        /* BİLGİ SATIRLARI DÜZENİ */
-        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.95rem; color: #475569; }
-        .info-row:last-child { border-bottom: none; }
-        .info-row span { font-weight: 600; color: #64748b; }
-        .info-row b { color: #0f172a; text-align: right; max-width: 60%; word-break: break-word; }
-        
-        /* UYARI VE VURGULU METİN DÜZENİ */
-        .alert-text { color: #dc2626; font-weight: 900; }
+        body {
+            background-color: #f0f4f8;
+            color: #333333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 550px;
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h2 {
+            color: #1e293b;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* --- SORGULAMA FORMU --- */
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .input-group input {
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .btn-submit {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* --- YÜKLENİYOR VE UYARI MESAJLARI --- */
+        .loading {
+            display: none;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+
+        .alert-error {
+            display: none;
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* --- SONUÇ DETAY KARTI --- */
+        .result-container {
+            display: none;
+            margin-top: 25px;
+            border-top: 2px dashed #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .result-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .data-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .data-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: right;
+        }
+
+        .btn-reset {
+            margin-top: 20px;
+            width: 100%;
+            background-color: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-reset:hover {
+            background-color: #e2e8f0;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Öğrenci Sorgulama</h2>
-    <div id="guncellemeTarihi" class="update-info">Son Güncelleme: <span id="tarihMetni">Yükleniyor...</span></div>
-    <div id="status" style="font-size:12px; margin-bottom:15px; color:#64748b;">Veriler Hazırlanıyor...</div>
-    
-    <!-- GİRİŞ ALANLARI -->
-    <input type="text" id="tcInput" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
-    <input type="text" id="ogrNoInput" placeholder="Öğrenci No">
-    
-    <button id="sorgulaBtn" onclick="sorgula()" disabled>SORGULA</button>
-    <div id="sonuc"></div>
-</div>
+    <div class="card">
+        <div class="header">
+            <h2>Sorgulama Portalı</h2>
+            <p>Sisteme kayıtlı bilgilerinizi öğrenmek için T.C. Kimlik numaranızı giriniz.</p>
+        </div>
 
-<script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSkDz2S-vnw6gr6amVAIX7OYj2c8l5WDrDxkWI-8WiKZW1qaaJJJeP0oxcMgYIiozY-ONZV23V0Xw5m/pub?output=csv';
-    let ogrenciListesi = [];
+        <!-- T.C. Giriş Formu -->
+        <div class="search-box">
+            <div class="input-group">
+                <label for="tcInput">T.C. KİMLİK NO</label>
+                <input type="text" id="tcInput" maxlength="11" placeholder="11 haneli T.C. No giriniz" autocomplete="off">
+            </div>
+            <button class="btn-submit" id="searchBtn">Sorgula</button>
+        </div>
 
-    function csvToArray(text) {
-        let cleanText = text.replace(/\r/g, "");
-        let p = '', Array = [[]], Symbol = ',', i = 0, l = 0, q = false;
-        for (let character of cleanText) {
-            if (character === '"') { q = !q; }
-            else if (character === Symbol && !q) { p = ''; Array[i][++l] = p; }
-            else if (character === '\n' && !q) { if (Array[i][l] === undefined) { Array[i][l] = p; } p = ''; Array[++i] = [p]; l = 0; }
-            else { p += character; Array[i][l] = p; }
-        }
-        return Array;
-    }
+        <!-- Yükleniyor Uyarısı -->
+        <div id="loading" class="loading">Veriler sorgulanıyor, lütfen bekleyin...</div>
 
-    async function verileriGetir() {
-        try {
-            const res = await fetch(csvUrl);
-            const data = await res.text();
-            const satirlar = csvToArray(data);
-            
-            // J2 HÜCRESİNDEN TARİHİ ÇEKER
-            // satirlar[1] = 2. Satır | [9] = 10. Sütun (J Sütunu)
-            if (satirlar.length > 1 && satirlar[1].length > 9) {
-                const j2Tarih = satirlar[1][9]?.trim();
-                document.getElementById('tarihMetni').innerText = j2Tarih || "Belirtilmedi";
-            } else {
-                document.getElementById('tarihMetni').innerText = "-";
+        <!-- Hata Uyarısı -->
+        <div id="errorMessage" class="alert-error"></div>
+
+        <!-- Kişisel Veri Sonuç Paneli -->
+        <div id="resultContainer" class="result-container">
+            <div class="result-title">Kayıtlı Bilgileriniz</div>
+            <div id="dataList" class="data-list">
+                <!-- Google Sheets sütun değerleri dinamik olarak buraya gelecek -->
+            </div>
+            <button class="btn-reset" id="resetBtn">Yeni Sorgulama Yap</button>
+        </div>
+    </div>
+
+    <script>
+        // Google Sheets "Web'de Yayınla" CSV URL'nizi buraya yapıştırın
+        const SHEET_URL = 'BURAYA_GOOGLE_SHEETS_CSV_LINKINI_YAPISTIRIN';
+
+        let headers = [];
+        let sheetRows = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("searchBtn").addEventListener("click", searchTC);
+            document.getElementById("resetBtn").addEventListener("click", resetForm);
+
+            // Sadece sayı girilmesine izin ver
+            document.getElementById("tcInput").addEventListener("input", (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+
+            // Enter tuşuna basınca sorgula
+            document.getElementById("tcInput").addEventListener("keypress", (e) => {
+                if (e.key === 'Enter') searchTC();
+            });
+        });
+
+        async function searchTC() {
+            const tcValue = document.getElementById("tcInput").value.trim();
+            const errorDiv = document.getElementById("errorMessage");
+            const loadingDiv = document.getElementById("loading");
+            const resultContainer = document.getElementById("resultContainer");
+
+            // Hata ve ekranı sıfırla
+            errorDiv.style.display = "none";
+            resultContainer.style.display = "none";
+
+            // T.C. Doğrulama (11 Hane kontrolü)
+            if (tcValue.length !== 11) {
+                showError("Lütfen 11 haneli T.C. Kimlik numaranızı eksiksiz giriniz.");
+                return;
             }
 
-            satirlar.forEach((sutun, index) => {
-                if (index === 0) return;
+            loadingDiv.style.display = "block";
+
+            try {
+                // Google Sheets'ten veriyi çek
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error("Veri çekilemedi.");
                 
-                if (sutun && sutun.length >= 2) {
-                    const tc = sutun[0]?.trim() || "";
-                    const ogrNo = sutun[1]?.trim() || "";
-                    const ad = sutun[2]?.trim() || "";
-                    const sube = sutun[3]?.trim() || "-";
-                    const devamsizlik = sutun[4]?.trim() || "-";
-                    const ogretmen = sutun[5]?.trim() || "-";
-                    const isletme = sutun[6]?.trim() || "";
-                    const iseGiris = sutun[7]?.trim() || "-";
-                    const istenCikis = (sutun.length > 8 && sutun[8]) ? sutun[8].trim() : "-";
-                    
-                    // Tablodaki T.C.'den ilk 2 ve son 2 haneyi alır
-                    const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
-                    
-                    if(tc && ogrNo) {
-                        ogrenciListesi.push({ 
-                            tc: tc,
-                            tcAnahtar: tcAnahtar,
-                            ogrNo: ogrNo,
-                            ad: ad, 
-                            sube: sube,
-                            devamsizlik: devamsizlik,
-                            ogretmen: ogretmen,
-                            isletme: isletme,
-                            iseGiris: iseGiris,
-                            istenCikis: istenCikis
-                        });
+                const csvData = await response.text();
+                parseAndSearch(csvData, tcValue);
+
+            } catch (error) {
+                console.error("Hata:", error);
+                showError("Verilere ulaşılamadı. Lütfen internet bağlantınızı veya Sheet bağlantınızı kontrol edin.");
+            } finally {
+                loadingDiv.style.display = "none";
+            }
+        }
+
+        function parseAndSearch(csvText, targetTC) {
+            // CSV satırlarını böl
+            const rows = csvText.split('\n').map(row => row.split(','));
+            
+            if (rows.length < 2) {
+                showError("Tabloda henüz kayıtlı veri bulunmuyor.");
+                return;
+            }
+
+            // Sütun Başlıkları (1. Satır)
+            headers = rows[0].map(h => h.trim().replace(/"/g, ""));
+
+            // T.C. Sütununun kaçıncı indekste olduğunu bul
+            // Başlıkta "tc", "t.c.", "tc no", "tc kimlik" yazıyorsa otomatik eşleştirir
+            let tcColumnIndex = headers.findIndex(h => {
+                const cleanHeader = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return cleanHeader.includes("tc") || cleanHeader.includes("tckimlik");
+            });
+
+            // Eğer başlık bulunamadıysa varsayılan olarak ilk sütun (0) T.C. kabul edilir
+            if (tcColumnIndex === -1) {
+                tcColumnIndex = 0;
+            }
+
+            // T.C. No ile eşleşen satırı ara
+            let matchedRow = null;
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row[tcColumnIndex]) {
+                    const cleanCellTC = row[tcColumnIndex].trim().replace(/"/g, "");
+                    if (cleanCellTC === targetTC) {
+                        matchedRow = row;
+                        break;
                     }
                 }
-            });
-            document.getElementById('status').innerHTML = "● Sistem Hazır";
-            document.getElementById('sorgulaBtn').disabled = false;
-        } catch (e) {
-            document.getElementById('status').innerText = "Bağlantı Hatası!";
-            document.getElementById('tarihMetni').innerText = "Hata";
-        }
-    }
-
-    function sorgula() {
-        const girilenTc = document.getElementById('tcInput').value.trim();
-        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
-        const sonucDiv = document.getElementById('sonuc');
-        
-        // 1. KONTROL: Kutular boş bırakılmışsa işlemi durdur
-        if (girilenTc === "" || ogrNoInput === "") {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ TÜM ALANLARI DOLDURUNUZ!</div>";
-            return;
-        }
-
-        // 2. KONTROL: T.C. tam 11 hane girilmemişse durdur
-        if (girilenTc.length !== 11) {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
-            return;
-        }
-
-        // Kullanıcının girdiği 11 haneli T.C.'nin ilk 2 ve son 2 hanesi alınır
-        const girilenTcAnahtar = girilenTc.slice(0, 2) + girilenTc.slice(-2);
-        
-        // Tam eşleşme kontrolü
-        const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
-        
-        if (ogrenci) {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "#fff";
-            
-            // İşletme durum kontrolü
-            let isletmeMetni = ogrenci.isletme;
-            if (!isletmeMetni || isletmeMetni === "") {
-                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${ogrenci.istenCikis})` : "";
-                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
             }
 
-            sonucDiv.innerHTML = `
-                <span class="name-label">${ogrenci.ad}</span>
-                <div class="info-row"><span>T.C. No:</span> <b>${ogrenci.tc}</b></div>
-                <div class="info-row"><span>Öğrenci No:</span> <b>${ogrenci.ogrNo}</b></div>
-                <div class="info-row"><span>Şube:</span> <b>${ogrenci.sube}</b></div>
-                <div class="info-row"><span>Devamsızlık:</span> <b>${ogrenci.devamsizlik}</b></div>
-                <div class="info-row"><span>Öğretmen:</span> <b>${ogrenci.ogretmen}</b></div>
-                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
-                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${ogrenci.iseGiris}</b></div>
-                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${ogrenci.istenCikis}</b></div>
-            `;
-        } else {
-            sonucDiv.style.display = "block";
-            sonucDiv.style.backgroundColor = "var(--danger)";
-            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. KİMLİK NO VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+            if (matchedRow) {
+                displayResult(headers, matchedRow, tcColumnIndex);
+            } else {
+                showError("Girilen T.C. Kimlik numarasına ait kayıt bulunamadı.");
+            }
         }
-    }
 
-    document.getElementById('tcInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
-    document.getElementById('ogrNoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sorgula(); });
-    
-    verileriGetir();
-</script>
+        function displayResult(headerArray, rowArray, tcIdx) {
+            const dataList = document.getElementById("dataList");
+            const resultContainer = document.getElementById("resultContainer");
+            
+            dataList.innerHTML = "";
 
+            // Bulunan satırdaki tüm sütunları şık bir liste halinde bas
+            headerArray.forEach((header, index) => {
+                const cellValue = rowArray[index] ? rowArray[index].trim().replace(/"/g, "") : "-";
+
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "data-item";
+                itemDiv.innerHTML = `
+                    <span class="data-label">${header}</span>
+                    <span class="data-value">${cellValue || '-'}</span>
+                `;
+                dataList.appendChild(itemDiv);
+            });
+
+            resultContainer.style.display = "block";
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById("errorMessage");
+            errorDiv.innerText = msg;
+            errorDiv.style.display = "block";
+        }
+
+        function resetForm() {
+            document.getElementById("tcInput").value = "";
+            document.getElementById("resultContainer").style.display = "none";
+            document.getElementById("errorMessage").style.display = "none";
+            document.getElementById("tcInput").focus();
+        }
+    </script>
 </body>
 </html>
