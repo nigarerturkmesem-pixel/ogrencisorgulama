@@ -1,133 +1,136 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Öğrenci Bilgi Sorgulama</title>
+<title>Öğrenci Bilgi Sorgulama</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e3a8a);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        .container {
-            width: 100%;
-            max-width: 450px;
-            background: white;
-            border-radius: 20px;
-            padding: 35px 25px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-            text-align: center;
-        }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e40af);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
 
-        h1 {
-            margin-top: 0;
-            color: #1e3a8a;
-            font-size: 27px;
-        }
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    border-radius: 20px;
+    padding: 35px 25px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 25px;
-        }
+h1 {
+    text-align: center;
+    color: #1e3a8a;
+    margin-top: 0;
+}
 
-        input {
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            outline: none;
-            text-align: center;
-        }
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+}
 
-        input:focus {
-            border-color: #2563eb;
-        }
+input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+}
 
-        button {
-            width: 100%;
-            margin-top: 15px;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background: #2563eb;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+input:focus {
+    border-color: #2563eb;
+}
 
-        button:hover {
-            background: #1d4ed8;
-        }
+button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-        #loading {
-            display: none;
-            margin-top: 20px;
-            color: #2563eb;
-        }
+button:hover {
+    background: #1d4ed8;
+}
 
-        #error {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            background: #fee2e2;
-            color: #b91c1c;
-            font-weight: bold;
-        }
+#loading {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+    color: #2563eb;
+}
 
-        #result {
-            display: none;
-            margin-top: 25px;
-            text-align: left;
-        }
+#error {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #fee2e2;
+    color: #b91c1c;
+    text-align: center;
+    font-weight: bold;
+}
 
-        .result-title {
-            text-align: center;
-            color: #1e3a8a;
-            margin-bottom: 15px;
-        }
+#result {
+    display: none;
+    margin-top: 25px;
+}
 
-        .info {
-            padding: 14px;
-            margin-bottom: 10px;
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
+.result-title {
+    text-align: center;
+    color: #1e3a8a;
+    margin-bottom: 15px;
+}
 
-        .label {
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
+.info {
+    padding: 14px;
+    margin-bottom: 10px;
+    background: #f1f5f9;
+    border-radius: 10px;
+}
 
-        .value {
-            font-size: 17px;
-            font-weight: bold;
-            color: #111827;
-        }
+.label {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 5px;
+}
 
-        .footer {
-            margin-top: 25px;
-            font-size: 12px;
-            color: #999;
-        }
-    </style>
+.value {
+    font-size: 17px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 12px;
+    color: #999;
+}
+
+</style>
 </head>
 
 <body>
@@ -157,21 +160,28 @@
     </div>
 
     <div id="error">
-        Kayıt bulunamadı. Lütfen TC numaranızı kontrol ediniz.
+        Kayıt bulunamadı.
     </div>
 
     <div id="result">
 
-        <h2 class="result-title">Öğrenci Bilgileri</h2>
+        <h2 class="result-title">
+            Öğrenci Bilgileri
+        </h2>
 
         <div class="info">
-            <div class="label">Öğrenci Ad Soyad</div>
+            <div class="label">Ad Soyad</div>
             <div class="value" id="adsoyad"></div>
         </div>
 
         <div class="info">
-            <div class="label">Okul No</div>
-            <div class="value" id="okulno"></div>
+            <div class="label">Öğrenci No</div>
+            <div class="value" id="ogrencino"></div>
+        </div>
+
+        <div class="info">
+            <div class="label">Dal</div>
+            <div class="value" id="dal"></div>
         </div>
 
         <div class="info">
@@ -195,208 +205,302 @@
 
 <script>
 
-    // GOOGLE SHEETS CSV ADRESİ
-    const SHEET_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSbhS66cyJIkBHPweO8_73pff5HbUQoPhYl4mjY8atTWwKrANg7d0ZVpHzeSHHiOoSAsg_6AZpxQRHQ/pub?output=csv";
+// =====================================================
+// GOOGLE SHEETS BAĞLANTISI
+// =====================================================
+
+const SHEET_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vSbhS66cyJIkBHPweO8_73pff5HbUQoPhYl4mjY8atTWwKrANg7d0ZVpHzeSHHiOoSAsg_6AZpxQRHQ/pub?output=csv";
 
 
-    async function sorgula() {
+// =====================================================
+// SORGULAMA
+// =====================================================
 
-        const tc = document.getElementById("tc").value.trim();
+async function sorgula() {
 
-        const error = document.getElementById("error");
-        const result = document.getElementById("result");
-        const loading = document.getElementById("loading");
+    const tc =
+        document.getElementById("tc").value.trim();
 
-        error.style.display = "none";
-        result.style.display = "none";
+    const error =
+        document.getElementById("error");
 
-        // TC kontrolü
-        if (!/^\d{11}$/.test(tc)) {
+    const result =
+        document.getElementById("result");
+
+    const loading =
+        document.getElementById("loading");
+
+
+    error.style.display = "none";
+    result.style.display = "none";
+
+
+    // TC 11 hane kontrolü
+
+    if (!/^\d{11}$/.test(tc)) {
+
+        error.innerText =
+            "Lütfen 11 haneli TC Kimlik Numaranızı giriniz.";
+
+        error.style.display = "block";
+
+        return;
+    }
+
+
+    loading.style.display = "block";
+
+
+    try {
+
+        const response =
+            await fetch(SHEET_URL);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Google Sheets verisi alınamadı."
+            );
+
+        }
+
+
+        const csv =
+            await response.text();
+
+
+        const rows =
+            csvToArray(csv);
+
+
+        let bulunan = null;
+
+
+        // =================================================
+        // TABLO SIRASI
+        //
+        // 0 = TC NO
+        // 1 = AD SOYAD
+        // 2 = ÖĞRENCİ NO
+        // 3 = DAL
+        // 4 = SINIF
+        // 5 = OKUL GÜNÜ
+        // =================================================
+
+
+        for (let i = 1; i < rows.length; i++) {
+
+            const satir = rows[i];
+
+
+            if (!satir || satir.length < 6) {
+                continue;
+            }
+
+
+            const tcNo =
+                satir[0]
+                .toString()
+                .trim()
+                .replace(/\s/g, "");
+
+
+            if (tcNo === tc) {
+
+                bulunan = satir;
+
+                break;
+            }
+
+        }
+
+
+        loading.style.display = "none";
+
+
+        // KAYIT YOKSA
+
+        if (!bulunan) {
 
             error.innerText =
-                "Lütfen 11 haneli TC Kimlik Numaranızı giriniz.";
+                "Kayıt bulunamadı. Lütfen TC numaranızı kontrol ediniz.";
 
             error.style.display = "block";
 
             return;
         }
 
-        loading.style.display = "block";
 
-        try {
+        // =================================================
+        // BİLGİLERİ EKRANA YAZ
+        // =================================================
 
-            const response = await fetch(SHEET_URL);
+        document.getElementById("adsoyad").innerText =
+            bulunan[1] || "-";
 
-            if (!response.ok) {
-                throw new Error("Google Sheets verisi alınamadı.");
-            }
 
-            const csv = await response.text();
+        document.getElementById("ogrencino").innerText =
+            bulunan[2] || "-";
 
-            const rows = csvToArray(csv);
 
-            if (rows.length < 2) {
-                throw new Error("Tabloda veri bulunamadı.");
-            }
+        document.getElementById("dal").innerText =
+            bulunan[3] || "-";
 
-            /*
-                TABLO YAPISI:
 
-                0 = TC NO
-                1 = ÖĞRENCİ AD SOYAD
-                2 = OKUL NO
-                3 = SINIF
-                4 = OKUL GÜNÜ
-            */
+        document.getElementById("sinif").innerText =
+            bulunan[4] || "-";
 
-            let bulunan = null;
 
-            for (let i = 1; i < rows.length; i++) {
+        document.getElementById("okulgunu").innerText =
+            bulunan[5] || "-";
 
-                const satir = rows[i];
 
-                if (!satir || satir.length < 5) {
-                    continue;
-                }
+        result.style.display = "block";
 
-                const tcNo = satir[0]
-                    .toString()
-                    .trim()
-                    .replace(/\s/g, "");
-
-                if (tcNo === tc) {
-
-                    bulunan = satir;
-
-                    break;
-                }
-            }
-
-            loading.style.display = "none";
-
-            if (!bulunan) {
-
-                error.innerText =
-                    "Kayıt bulunamadı. Lütfen TC numaranızı kontrol ediniz.";
-
-                error.style.display = "block";
-
-                return;
-            }
-
-            // SONUÇLARI GÖSTER
-
-            document.getElementById("adsoyad").innerText =
-                bulunan[1] || "-";
-
-            document.getElementById("okulno").innerText =
-                bulunan[2] || "-";
-
-            document.getElementById("sinif").innerText =
-                bulunan[3] || "-";
-
-            document.getElementById("okulgunu").innerText =
-                bulunan[4] || "-";
-
-            result.style.display = "block";
-
-        } catch (e) {
-
-            loading.style.display = "none";
-
-            error.innerText =
-                "Verilere ulaşılamadı. Google Sheets bağlantısını kontrol ediniz.";
-
-            error.style.display = "block";
-
-            console.error(e);
-        }
     }
 
 
-    // CSV OKUYUCU
-    function csvToArray(text) {
+    catch (e) {
 
-        const rows = [];
+        loading.style.display = "none";
 
-        let row = [];
-        let cell = "";
-        let insideQuotes = false;
 
-        for (let i = 0; i < text.length; i++) {
+        error.innerText =
+            "Verilere ulaşılamadı. Google Sheets bağlantısını kontrol ediniz.";
 
-            const char = text[i];
 
-            if (char === '"') {
+        error.style.display = "block";
 
-                if (
-                    insideQuotes &&
-                    text[i + 1] === '"'
-                ) {
-                    cell += '"';
-                    i++;
-                } else {
-                    insideQuotes = !insideQuotes;
-                }
 
-            } else if (
-                char === "," &&
-                !insideQuotes
+        console.error(e);
+
+    }
+
+}
+
+
+// =====================================================
+// CSV OKUMA
+// =====================================================
+
+function csvToArray(text) {
+
+    const rows = [];
+
+    let row = [];
+    let cell = "";
+    let insideQuotes = false;
+
+
+    for (let i = 0; i < text.length; i++) {
+
+        const char = text[i];
+
+
+        if (char === '"') {
+
+            if (
+                insideQuotes &&
+                text[i + 1] === '"'
             ) {
 
-                row.push(cell);
-                cell = "";
+                cell += '"';
 
-            } else if (
-                (char === "\n" || char === "\r") &&
-                !insideQuotes
-            ) {
-
-                if (char === "\r" && text[i + 1] === "\n") {
-                    i++;
-                }
-
-                row.push(cell);
-
-                rows.push(row);
-
-                row = [];
-                cell = "";
+                i++;
 
             } else {
 
-                cell += char;
+                insideQuotes =
+                    !insideQuotes;
+
             }
+
         }
 
-        if (cell !== "" || row.length > 0) {
+
+        else if (
+            char === "," &&
+            !insideQuotes
+        ) {
+
+            row.push(cell);
+
+            cell = "";
+
+        }
+
+
+        else if (
+            (char === "\n" || char === "\r") &&
+            !insideQuotes
+        ) {
+
+            if (
+                char === "\r" &&
+                text[i + 1] === "\n"
+            ) {
+
+                i++;
+
+            }
+
 
             row.push(cell);
 
             rows.push(row);
+
+            row = [];
+
+            cell = "";
+
         }
 
-        return rows;
+
+        else {
+
+            cell += char;
+
+        }
+
     }
 
 
-    // ENTER TUŞU İLE SORGULAMA
-    document.getElementById("tc").addEventListener(
-        "keydown",
-        function(event) {
+    if (
+        cell !== "" ||
+        row.length > 0
+    ) {
 
-            if (event.key === "Enter") {
+        row.push(cell);
 
-                sorgula();
+        rows.push(row);
 
-            }
+    }
 
-        }
-    );
+
+    return rows;
+
+}
+
+
+// =====================================================
+// ENTER TUŞU
+// =====================================================
+
+document
+.getElementById("tc")
+.addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+
+        sorgula();
+
+    }
+
+});
 
 </script>
 
 </body>
 </html>
-```
