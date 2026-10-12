@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Devamsızlık Sorgulama</title>
+    <title>Öğrenci Devamsızlık ve Koordinatör Öğretmen Sorgulama</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; }
-        .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; margin-bottom: 20px; }
         input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
@@ -20,8 +20,8 @@
 <body>
 
 <div class="container">
-    <h2>Öğrenci Sorgulama</h2>
-    <input type="text" id="studentNo" placeholder="Öğrenci Numarasını Giriniz">
+    <h2>MESEM Öğrenci Durum Sorgulama</h2>
+    <input type="text" id="studentNo" placeholder="Öğrenci Numarasını veya T.C. Giriniz">
     <button onclick="searchStudent()">Sorgula</button>
 
     <div id="result" class="result-box"></div>
@@ -38,7 +38,7 @@
         if (!query) {
             resultDiv.style.display = 'block';
             resultDiv.className = 'result-box error';
-            resultDiv.innerHTML = '<p>Lütfen geçerli bir öğrenci numarası giriniz.</p>';
+            resultDiv.innerHTML = '<p>Lütfen geçerli bir numara giriniz.</p>';
             return;
         }
 
@@ -46,12 +46,18 @@
             const response = await fetch(SHEET_CSV_URL);
             const csvText = await response.text();
             
-            // Satırları ayır
+            // Satırları ve virgül/noktalı virgül ayrımlarını yönetme
             const rows = csvText.split('\n').map(row => row.split(','));
             
-            // Başlıkları geçip arama yap (Sütun indekslerine dikkat ediniz)
-            // Varsayılan: 0. sütun = Okul No, 1. sütun = Ad Soyad, 2. sütun = Sınıf, 3. sütun = Devamsızlık
             let found = false;
+
+            // Sütun Sıralaması Örneği:
+            // 0: Okul No / T.C.
+            // 1: Adı Soyadı
+            // 2: Sınıfı / Alanı
+            // 3: İşletme Adı
+            // 4: Koordinatör Öğretmen
+            // 5: Devamsızlık Gün Sayısı
 
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
@@ -63,7 +69,9 @@
                         <p><strong>Öğrenci No:</strong> ${row[0]}</p>
                         <p><strong>Adı Soyadı:</strong> ${row[1]}</p>
                         <p><strong>Sınıfı / Alanı:</strong> ${row[2]}</p>
-                        <p><strong>Devamsızlık Gün Sayısı:</strong> ${row[3]}</p>
+                        <p><strong>İşletme Adı:</strong> ${row[3] || 'Belirtilmemiş'}</p>
+                        <p><strong>Koordinatör Öğretmen:</strong> ${row[4] || 'Atanmamış'}</p>
+                        <p><strong>Devamsızlık Gün Sayısı:</strong> ${row[5] || '0'}</p>
                     `;
                     break;
                 }
@@ -72,7 +80,7 @@
             if (!found) {
                 resultDiv.style.display = 'block';
                 resultDiv.className = 'result-box error';
-                resultDiv.innerHTML = '<p>Aranan numaraya ait öğrenci kaydı bulunamadı.</p>';
+                resultDiv.innerHTML = '<p>Aranan numaraya ait kayıt bulunamadı.</p>';
             }
 
         } catch (err) {
