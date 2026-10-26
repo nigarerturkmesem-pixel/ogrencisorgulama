@@ -77,9 +77,10 @@
             const data = await res.text();
             const satirlar = csvToArray(data);
             
-            if (satirlar.length > 1 && satirlar[1].length > 9) {
-                const j2Tarih = satirlar[1][9]?.trim();
-                document.getElementById('tarihMetni').innerText = j2Tarih || "Belirtilmedi";
+            // K Sütunundaki Güncelleme Tarihi (Index 10)
+            if (satirlar.length > 1 && satirlar[1].length > 10) {
+                const tarihDegeri = satirlar[1][10]?.trim();
+                document.getElementById('tarihMetni').innerText = tarihDegeri || "Belirtilmedi";
             } else {
                 document.getElementById('tarihMetni').innerText = "-";
             }
@@ -87,23 +88,23 @@
             satirlar.forEach((sutun, index) => {
                 if (index === 0) return;
                 
-                if (sutun && sutun.length >= 2) {
-                    const tc = sutun[0]?.trim() || "";
-                    const ogrNo = sutun[1]?.trim() || "";
-                    const ad = sutun[2]?.trim() || "";
-                    const sube = sutun[3]?.trim() || "-";
-                    const dal = sutun[4]?.trim() || "-";          // DAL (5. Sütun)
-                    const devamsizlik = sutun[5]?.trim() || "-";  // DEVAMSIZLIK (6. Sütun)
-                    const ogretmen = sutun[6]?.trim() || "-";
-                    const isletme = sutun[7]?.trim() || "";
-                    const iseGiris = sutun[8]?.trim() || "-";
-                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-";
+                if (sutun && sutun.length >= 1) {
+                    const tc = sutun[0]?.trim() || "";          // A Sütunu
+                    const ogrNo = sutun[1]?.trim() || "";       // B Sütunu
+                    const ad = sutun[2]?.trim() || "";          // C Sütunu
+                    const sube = sutun[3]?.trim() || "-";       // D Sütunu
+                    const devamsizlik = sutun[4]?.trim() || "-";// E Sütunu
+                    const dal = sutun[5]?.trim() || "-";          // F Sütunu
+                    const ogretmen = sutun[6]?.trim() || "-";   // G Sütunu
+                    const isletme = sutun[7]?.trim() || "";     // H Sütunu
+                    const iseGiris = sutun[8]?.trim() || "-";   // I Sütunu
+                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-"; // J Sütunu
                     
                     const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
                     
                     if(tc && ogrNo) {
                         ogrenciListesi.push({ 
-                            tc, tcAnahtar, ogrNo, ad, sube, dal, devamsizlik, ogretmen, isletme, iseGiris, istenCikis
+                            tc, tcAnahtar, ogrNo, ad, sube, devamsizlik, dal, ogretmen, isletme, iseGiris, istenCikis
                         });
                     }
                 }
@@ -153,8 +154,8 @@
                 <div class="info-row"><span>T.C. No:</span> <b>${escapeHtml(ogrenci.tc)}</b></div>
                 <div class="info-row"><span>Öğrenci No:</span> <b>${escapeHtml(ogrenci.ogrNo)}</b></div>
                 <div class="info-row"><span>Şube:</span> <b>${escapeHtml(ogrenci.sube)}</b></div>
-                <div class="info-row"><span>Dal:</span> <b>${escapeHtml(ogrenci.dal)}</b></div>
                 <div class="info-row"><span>Devamsızlık:</span> <b>${escapeHtml(ogrenci.devamsizlik)}</b></div>
+                <div class="info-row"><span>Dal:</span> <b>${escapeHtml(ogrenci.dal)}</b></div>
                 <div class="info-row"><span>Öğretmen:</span> <b>${escapeHtml(ogrenci.ogretmen)}</b></div>
                 <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
                 <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${escapeHtml(ogrenci.iseGiris)}</b></div>
