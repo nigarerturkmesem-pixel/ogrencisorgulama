@@ -77,10 +77,9 @@
             const data = await res.text();
             const satirlar = csvToArray(data);
             
-            // 11. Sütun (Index 10) Son Güncelleme Tarihi
-            if (satirlar.length > 1 && satirlar[1].length > 10) {
-                const k2Tarih = satirlar[1][10]?.trim();
-                document.getElementById('tarihMetni').innerText = k2Tarih || "Belirtilmedi";
+            if (satirlar.length > 1 && satirlar[1].length > 9) {
+                const j2Tarih = satirlar[1][9]?.trim();
+                document.getElementById('tarihMetni').innerText = j2Tarih || "Belirtilmedi";
             } else {
                 document.getElementById('tarihMetni').innerText = "-";
             }
@@ -89,12 +88,93 @@
                 if (index === 0) return;
                 
                 if (sutun && sutun.length >= 2) {
-                    const tc = sutun[0]?.trim() || "";                 // 1. Sütun: TC No
-                    const ogrNo = sutun[1]?.trim() || "";              // 2. Sütun: Öğrenci No
-                    const ad = sutun[2]?.trim() || "";                 // 3. Sütun: Ad Soyad
-                    const sube = sutun[3]?.trim() || "-";              // 4. Sütun: Şube
-                    const devamsizlik = sutun[4]?.trim() || "-";       // 5. Sütun: Devamsızlık
-                    const dal = sutun[5]?.trim() || "-";               // 6. Sütun: Dal
-                    const ogretmen = sutun[6]?.trim() || "-";          // 7. Sütun: Öğretmen
-                    const isletme = sutun[7]?.trim() || "";            // 8. Sütun: İşletme
-                    const iseGiris = sutun[8]?.trim() ||
+                    const tc = sutun[0]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "";
+                    const ad = sutun[2]?.trim() || "";
+                    const sube = sutun[3]?.trim() || "-";
+                    const dal = sutun[4]?.trim() || "-";          // DAL (5. Sütun)
+                    const devamsizlik = sutun[5]?.trim() || "-";  // DEVAMSIZLIK (6. Sütun)
+                    const ogretmen = sutun[6]?.trim() || "-";
+                    const isletme = sutun[7]?.trim() || "";
+                    const iseGiris = sutun[8]?.trim() || "-";
+                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-";
+                    
+                    const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
+                    
+                    if(tc && ogrNo) {
+                        ogrenciListesi.push({ 
+                            tc, tcAnahtar, ogrNo, ad, sube, dal, devamsizlik, ogretmen, isletme, iseGiris, istenCikis
+                        });
+                    }
+                }
+            });
+            document.getElementById('status').innerHTML = "● Sistem Hazır";
+            document.getElementById('sorgulaBtn').disabled = false;
+        } catch (e) {
+            document.getElementById('status').innerText = "Bağlantı Hatası!";
+            document.getElementById('tarihMetni').innerText = "Hata";
+        }
+    }
+
+    function sorgula() {
+        const girilenTc = document.getElementById('tcInput').value.trim();
+        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
+        const sonucDiv = document.getElementById('sonuc');
+        
+        if (girilenTc === "" || ogrNoInput === "") {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ LÜTFEN HEM T.C. KİMLİK NO HEM DE ÖĞRENCİ NO GİRİNİZ!</div>";
+            return;
+        }
+
+        if (girilenTc.length !== 11) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
+            return;
+        }
+
+        const girilenTcAnahtar = girilenTc.slice(0, 2) + girilenTc.slice(-2);
+        const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
+        
+        if (ogrenci) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "#fff";
+            
+            let isletmeMetni = escapeHtml(ogrenci.isletme);
+            if (!isletmeMetni || isletmeMetni === "") {
+                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${escapeHtml(ogrenci.istenCikis)})` : "";
+                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
+            }
+
+            sonucDiv.innerHTML = `
+                <span class="name-label">${escapeHtml(ogrenci.ad)}</span>
+                <div class="info-row"><span>T.C. No:</span> <b>${escapeHtml(ogrenci.tc)}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${escapeHtml(ogrenci.ogrNo)}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${escapeHtml(ogrenci.sube)}</b></div>
+                <div class="info-row"><span>Dal:</span> <b>${escapeHtml(ogrenci.dal)}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${escapeHtml(ogrenci.devamsizlik)}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${escapeHtml(ogrenci.ogretmen)}</b></div>
+                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${escapeHtml(ogrenci.iseGiris)}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${escapeHtml(ogrenci.istenCikis)}</b></div>
+            `;
+        } else {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. KİMLİK NO VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+        }
+    }
+
+    ['tcInput', 'ogrNoInput'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    verileriGetir();
+</script>
+
+</body>
+</html>
