@@ -1,3 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Sorgulama Paneli</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --success: #ffffff; --danger: #fee2e2; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
+        .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: center; border: 1px solid #e2e8f0; }
+        h2 { color: var(--primary); margin-bottom: 5px; font-size: 1.5rem; }
+        
+        .update-info { font-size: 0.85rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
+        .update-info span { color: #0f172a; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
+
+        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: var(--primary); }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.3s; margin-top: 5px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #sonuc { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; border: 1px solid #cbd5e1; text-align: left; background-color: #fff; }
+        .name-label { font-size: 1.25rem; font-weight: bold; display: block; margin-bottom: 15px; color: #1e293b; text-transform: uppercase; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.95rem; color: #475569; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row span { font-weight: 600; color: #64748b; }
+        .info-row b { color: #0f172a; text-align: right; max-width: 60%; word-break: break-word; }
+        
+        .alert-text { color: #dc2626; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Öğrenci Sorgulama</h2>
+    <div id="guncellemeTarihi" class="update-info">Son Güncelleme: <span id="tarihMetni">Yükleniyor...</span></div>
+    <div id="status" style="font-size:12px; margin-bottom:15px; color:#64748b;">Veriler Hazırlanıyor...</div>
+    
+    <form onsubmit="sorgula(); return false;">
+        <input type="text" id="tcInput" inputmode="numeric" placeholder="T.C. Kimlik No (11 Hane)" maxlength="11">
+        <input type="text" id="ogrNoInput" inputmode="numeric" placeholder="Öğrenci No">
+        <button type="submit" id="sorgulaBtn" disabled>SORGULA</button>
+    </form>
+    
+    <div id="sonuc"></div>
+</div>
+
 <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSkDz2S-vnw6gr6amVAIX7OYj2c8l5WDrDxkWI-8WiKZW1qaaJJJeP0oxcMgYIiozY-ONZV23V0Xw5m/pub?output=csv';
     let ogrenciListesi = [];
@@ -9,7 +56,7 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(./'/g, '&#039;');
+            .replace(/'/g, '&#039;');
     }
 
     function csvToArray(text) {
@@ -30,59 +77,28 @@
             const data = await res.text();
             const satirlar = csvToArray(data);
             
-            if (satirlar.length < 2) {
-                document.getElementById('status').innerText = "Tablo boş!";
-                return;
-            }
-
-            // 1. Satırdaki başlıkları al ve küçük harfe çevir
-            const basliklar = satirlar[0].map(h => h.trim().toLowerCase());
-            
-            // Başlık adlarına göre sütun indekslerini dinamik olarak bulan yardımcı fonksiyon
-            const bulIndex = (arananlar) => {
-                for (let aranan of arananlar) {
-                    const idx = basliklar.findIndex(b => b.includes(aranan));
-                    if (idx !== -1) return idx;
-                }
-                return -1;
-            };
-
-            // Google Sheets'teki sütun başlıklarınızın olası adlarını buraya yazıyoruz
-            const iTc = bulIndex(['tc', 't.c.', 'kimlik']);
-            const iOgrNo = bulIndex(['öğrenci no', 'ogr no', 'okul no']);
-            const iAd = bulIndex(['ad', 'ad soyad', 'öğrenci adı', 'ad-soyad']);
-            const iSube = bulIndex(['şube', 'sinif', 'sınıf']);
-            const iDal = bulIndex(['dal', 'alan']);
-            const iDevamsizlik = bulIndex(['devamsızlık', 'devam']);
-            const iOgretmen = bulIndex(['öğretmen', 'koordinatör', 'danışman']);
-            const iIsletme = bulIndex(['işletme', 'staj yeri', 'firma']);
-            const iIseGiris = bulIndex(['işe giriş', 'giriş tarihi']);
-            const iIstenCikis = bulIndex(['işten çıkış', 'çıkış tarihi']);
-            const iTarih = bulIndex(['tarih', 'güncelleme', 'son güncelleme']);
-
-            // Son güncelleme tarihini otomatik bul ve yaz
-            if (iTarih !== -1 && satirlar.length > 1) {
-                const j2Tarih = satirlar[1][iTarih]?.trim();
+            if (satirlar.length > 1 && satirlar[1].length > 9) {
+                const j2Tarih = satirlar[1][9]?.trim();
                 document.getElementById('tarihMetni').innerText = j2Tarih || "Belirtilmedi";
             } else {
                 document.getElementById('tarihMetni').innerText = "-";
             }
 
-            // Verileri döngüye al
             satirlar.forEach((sutun, index) => {
-                if (index === 0) return; // Başlık satırını atla
+                if (index === 0) return;
                 
-                if (sutun && sutun.length > 0) {
-                    const tc = iTc !== -1 ? (sutun[iTc]?.trim() || "") : "";
-                    const ogrNo = iOgrNo !== -1 ? (sutun[iOgrNo]?.trim() || "") : "";
-                    const ad = iAd !== -1 ? (sutun[iAd]?.trim() || "") : "";
-                    const sube = iSube !== -1 ? (sutun[iSube]?.trim() || "-") : "-";
-                    const dal = iDal !== -1 ? (sutun[iDal]?.trim() || "-") : "-";
-                    const devamsizlik = iDevamsizlik !== -1 ? (sutun[iDevamsizlik]?.trim() || "-") : "-";
-                    const ogretmen = iOgretmen !== -1 ? (sutun[iOgretmen]?.trim() || "-") : "-";
-                    const isletme = iIsletme !== -1 ? (sutun[iIsletme]?.trim() || "") : "";
-                    const iseGiris = iIseGiris !== -1 ? (sutun[iIseGiris]?.trim() || "-") : "-";
-                    const istenCikis = iIstenCikis !== -1 ? (sutun[iIstenCikis]?.trim() || "-") : "-";
+                if (sutun && sutun.length >= 2) {
+                    // TABLONUZDAKİ SÜTUN SIRALARINI BURADAN DEĞİŞTİREBİLİRSİNİZ (0 ilk sütundur)
+                    const tc = sutun[0]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "";
+                    const ad = sutun[2]?.trim() || "";
+                    const sube = sutun[3]?.trim() || "-";
+                    const dal = sutun[4]?.trim() || "-";         
+                    const devamsizlik = sutun[5]?.trim() || "-";  
+                    const ogretmen = sutun[6]?.trim() || "-";
+                    const isletme = sutun[7]?.trim() || "";
+                    const iseGiris = sutun[8]?.trim() || "-";
+                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-";
                     
                     const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
                     
@@ -93,7 +109,6 @@
                     }
                 }
             });
-
             document.getElementById('status').innerHTML = "● Sistem Hazır";
             document.getElementById('sorgulaBtn').disabled = false;
         } catch (e) {
@@ -161,3 +176,6 @@
 
     verileriGetir();
 </script>
+
+</body>
+</html>
