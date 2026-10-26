@@ -46,4 +46,55 @@
 </div>
 
 <script>
-    const csvUrl = '
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSkDz2S-vnw6gr6amVAIX7OYj2c8l5WDrDxkWI-8WiKZW1qaaJJJeP0oxcMgYIiozY-ONZV23V0Xw5m/pub?output=csv';
+    let ogrenciListesi = [];
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function csvToArray(text) {
+        let cleanText = text.replace(/\r/g, "");
+        let p = '', Array = [[]], Symbol = ',', i = 0, l = 0, q = false;
+        for (let character of cleanText) {
+            if (character === '"') { q = !q; }
+            else if (character === Symbol && !q) { p = ''; Array[i][++l] = p; }
+            else if (character === '\n' && !q) { if (Array[i][l] === undefined) { Array[i][l] = p; } p = ''; Array[++i] = [p]; l = 0; }
+            else { p += character; Array[i][l] = p; }
+        }
+        return Array;
+    }
+
+    async function verileriGetir() {
+        try {
+            const res = await fetch(csvUrl);
+            const data = await res.text();
+            const satirlar = csvToArray(data);
+            
+            // 11. Sütun (Index 10) Son Güncelleme Tarihi
+            if (satirlar.length > 1 && satirlar[1].length > 10) {
+                const k2Tarih = satirlar[1][10]?.trim();
+                document.getElementById('tarihMetni').innerText = k2Tarih || "Belirtilmedi";
+            } else {
+                document.getElementById('tarihMetni').innerText = "-";
+            }
+
+            satirlar.forEach((sutun, index) => {
+                if (index === 0) return;
+                
+                if (sutun && sutun.length >= 2) {
+                    const tc = sutun[0]?.trim() || "";                 // 1. Sütun: TC No
+                    const ogrNo = sutun[1]?.trim() || "";              // 2. Sütun: Öğrenci No
+                    const ad = sutun[2]?.trim() || "";                 // 3. Sütun: Ad Soyad
+                    const sube = sutun[3]?.trim() || "-";              // 4. Sütun: Şube
+                    const devamsizlik = sutun[4]?.trim() || "-";       // 5. Sütun: Devamsızlık
+                    const dal = sutun[5]?.trim() || "-";               // 6. Sütun: Dal
+                    const ogretmen = sutun[6]?.trim() || "-";          // 7. Sütun: Öğretmen
+                    const isletme = sutun[7]?.trim() || "";            // 8. Sütun: İşletme
+                    const iseGiris = sutun[8]?.trim() ||
