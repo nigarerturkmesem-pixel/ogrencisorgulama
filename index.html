@@ -60,6 +60,7 @@
             padding: 4px 12px;
             border-radius: 20px;
             font-weight: 500;
+            word-break: break-all;
         }
 
         .input-group {
@@ -124,6 +125,7 @@
         }
         
         .info-row { 
+            data-label: "";
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
@@ -144,19 +146,6 @@
         }
 
         .alert-text { color: var(--danger-text); font-weight: 700; }
-
-        /* Grid / Liste görünümü için ek stil */
-        .grid-view-toggle {
-            margin-top: 15px;
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            padding: 10px;
-        }
-        .grid-view-toggle:hover {
-            background: #f1f5f9;
-        }
     </style>
 </head>
 <body>
@@ -197,19 +186,20 @@
 
     function csvToArray(text) {
         let cleanText = text.replace(/\r/g, "");
-        let p = '', Array = [[]], Symbol = ',', i = 0, l = 0, q = false;
+        let p = '', arr = [[]], Symbol = ',', i = 0, l = 0, q = false;
         for (let character of cleanText) {
             if (character === '"') { q = !q; }
-            else if (character === Symbol && !q) { p = ''; Array[i][++l] = p; }
-            else if (character === '\n' && !q) { if (Array[i][l] === undefined) { Array[i][l] = p; } p = ''; Array[++i] = [p]; l = 0; }
-            else { p += character; Array[i][l] = p; }
+            else if (character === Symbol && !q) { p = ''; arr[i][++l] = p; }
+            else if (character === '\n' && !q) { if (arr[i][l] === undefined) { arr[i][l] = p; } p = ''; arr[++i] = [p]; l = 0; }
+            else { p += character; arr[i][l] = p; }
         }
-        return Array;
+        return arr;
     }
 
     async function verileriGetir() {
         try {
             const res = await fetch(csvUrl);
+            if (!res.ok) throw new Error(`HTTP Hata: ${res.status}`);
             const data = await res.text();
             const satirlar = csvToArray(data);
             
@@ -233,7 +223,7 @@
                     const ogretmen = sutun[6]?.trim() || "-";   
                     const isletme = sutun[7]?.trim() || "";     
                     const iseGiris = sutun[8]?.trim() || "-";   
-                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-"; 
+                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun.9.trim() : "-"; 
                     
                     const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
                     
@@ -247,7 +237,8 @@
             document.getElementById('status').innerText = "● Sistem Hazır";
             document.getElementById('sorgulaBtn').disabled = false;
         } catch (e) {
-            document.getElementById('status').innerText = "Bağlantı Hatası!";
+            console.error("Veri çekme hatası:", e);
+            document.getElementById('status').innerText = "Hata: " + e.message;
             document.getElementById('tarihMetni').innerText = "Hata";
         }
     }
@@ -266,3 +257,51 @@
 
         if (girilenTc.length !== 11) {
             sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger-bg)";
+            sonucDiv.innerHTML = "<div class='alert-box'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
+            return;
+        }
+
+        const girilenTcAnahtar = girilenTc.slice(0, 2) + girilenTc.slice(-2);
+        const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
+        
+        if (ogrenci) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "#fff";
+            
+            let isletmeMetni = escapeHtml(ogrenci.isletme);
+            if (!isletmeMetni || isletmeMetni === "") {
+                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${escapeHtml(ogrenci.istenCikis)})` : "";
+                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
+            }
+
+            sonucDiv.innerHTML = `
+                <span class="name-label">${escapeHtml(ogrenci.ad)}</span>
+                <div class="info-row"><span>T.C. No:</span> <b>${escapeHtml(ogrenci.tc)}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${escapeHtml(ogrenci.ogrNo)}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${escapeHtml(ogrenci.sube)}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${escapeHtml(ogrenci.devamsizlik)}</b></div>
+                <div class="info-row"><span>Dal:</span> <b>${escapeHtml(ogrenci.dal)}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${escapeHtml(ogrenci.ogretmen)}</b></div>
+                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${escapeHtml(ogrenci.iseGiris)}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${escapeHtml(ogrenci.istenCikis)}</b></div>
+            `;
+        } else {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger-bg)";
+            sonucDiv.innerHTML = "<div class='alert-box'>❌ T.C. KİMLİK NO VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+        }
+    }
+
+    ['tcInput', 'ogrNoInput'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    verileriGetir();
+</script>
+
+</body>
+</html>
