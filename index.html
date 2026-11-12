@@ -81,7 +81,7 @@
     // 1. Ana Sorgulama Sheet CSV Linki
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSkDz2S-vnw6gr6amVAIX7OYj2c8l5WDrDxkWI-8WiKZW1qaaJJJeP0oxcMgYIiozY-ONZV23V0Xw5m/pub?output=csv';
     
-    // 2. Okul No Öğrenme Sheet CSV Linki (1. Sütun: T.C. Kimlik No, 2. Sütun: Okul No)
+    // 2. Okul No Öğrenme Sheet CSV Linki
     const ogrNoCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEqV-TPcJRBojK5961kAGK2S2XUGL4m6aTB9vH7YLCrjgRIk0YV1sv9dwRa0amFV_WSvVpzAndni2j/pub?output=csv';
 
     let ogrenciListesi = [];
@@ -109,4 +109,189 @@
         return Array;
     }
 
-    //
+    function ekranDegistir(hedefEkran) {
+        document.getElementById('anaEkran').classList.add('hidden');
+        document.getElementById('noBulEkran').classList.add('hidden');
+        document.getElementById(hedefEkran).classList.remove('hidden');
+    }
+
+    function numaraylaSorgula(tc, ogrNo) {
+        document.getElementById('tcInput').value = tc;
+        document.getElementById('ogrNoInput').value = ogrNo;
+        ekranDegistir('anaEkran');
+        if (!document.getElementById('sorgulaBtn').disabled) {
+            sorgula();
+        }
+    }
+
+    // 1. Ana Verileri Çek
+    async function verileriGetir() {
+        try {
+            const res = await fetch(csvUrl);
+            const data = await res.text();
+            const satirlar = csvToArray(data);
+            
+            if (satirlar.length > 1 && satirlar[1].length > 10) {
+                const tarihDegeri = satirlar[1][10]?.trim();
+                document.getElementById('tarihMetni').innerText = tarihDegeri || "Belirtilmedi";
+            } else {
+                document.getElementById('tarihMetni').innerText = "-";
+            }
+
+            satirlar.forEach((sutun, index) => {
+                if (index === 0) return;
+                if (sutun && sutun.length >= 1) {
+                    const tc = sutun[0]?.trim() || "";
+                    const ogrNo = sutun[1]?.trim() || "";
+                    const ad = sutun[2]?.trim() || "";
+                    const sube = sutun[3]?.trim() || "-";
+                    const devamsizlik = sutun[4]?.trim() || "-";
+                    const dal = sutun[5]?.trim() || "-";
+                    const ogretmen = sutun[6]?.trim() || "-";
+                    const isletme = sutun[7]?.trim() || "";
+                    const iseGiris = sutun[8]?.trim() || "-";
+                    const istenCikis = (sutun.length > 9 && sutun[9]) ? sutun[9].trim() : "-";
+                    
+                    const tcAnahtar = tc.length >= 4 ? (tc.slice(0, 2) + tc.slice(-2)) : tc;
+                    
+                    if(tc && ogrNo) {
+                        ogrenciListesi.push({ 
+                            tc, tcAnahtar, ogrNo, ad, sube, devamsizlik, dal, ogretmen, isletme, iseGiris, istenCikis
+                        });
+                    }
+                }
+            });
+            document.getElementById('status').innerHTML = "● Sistem Hazır";
+            document.getElementById('sorgulaBtn').disabled = false;
+        } catch (e) {
+            console.error("Ana Veri Hatası:", e);
+            document.getElementById('status').innerText = "Bağlantı Hatası!";
+            document.getElementById('tarihMetni').innerText = "Hata";
+        }
+    }
+
+    // 2. Okul No Listesini Çek ve Konsola Yazdır
+    async function okulNoVerileriniGetir() {
+        try {
+            const res = await fetch(ogrNoCsvUrl);
+            const data = await res.text();
+            const satirlar = csvToArray(data);
+
+            console.log("--- OKUL NO TABLOSU İLK 3 SATIR ---", satirlar.slice(0, 3));
+
+            satirlar.forEach((sutun, index) => {
+                if (index === 0) return;
+                if (sutun && sutun.length >= 2) {
+                    const tc = sutun[0]?.trim().replace(/['"]+/g, '') || "";     
+                    const okulNo = sutun[1]?.trim().replace(/['"]+/g, '') || ""; 
+                    if (tc && okulNo) {
+                        okulNoListesi.push({ tc, okulNo });
+                    }
+                }
+            });
+
+            console.log("Yüklenen Toplam Okul No Kayıt Sayısı:", okulNoListesi.length);
+
+            if (okulNoListesi.length > 0) {
+                document.getElementById('noStatus').innerHTML = "● Okul No Listesi Hazır (" + okulNoListesi.length + " Kayıt)";
+                document.getElementById('noBulBtn').disabled = false;
+            } else {
+                document.getElementById('noStatus').innerText = "⚠️ Liste boş geldi veya sütunlar uymadı!";
+            }
+        } catch (e) {
+            console.error("Okul No Veri Hatası:", e);
+            document.getElementById('noStatus').innerText = "Bağlantı/CORS Hatası!";
+        }
+    }
+
+    function sorgula() {
+        const girilenTc = document.getElementById('tcInput').value.trim();
+        const ogrNoInput = document.getElementById('ogrNoInput').value.trim();
+        const sonucDiv = document.getElementById('sonuc');
+        
+        if (girilenTc === "" || ogrNoInput === "") {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ LÜTFEN HEM T.C. KİMLİK NO HEM DE ÖĞRENCİ NO GİRİNİZ!</div>";
+            return;
+        }
+
+        if (girilenTc.length !== 11) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
+            return;
+        }
+
+        const girilenTcAnahtar = girilenTc.slice(0, 2) + girilenTc.slice(-2);
+        const ogrenci = ogrenciListesi.find(o => o.tcAnahtar === girilenTcAnahtar && o.ogrNo === ogrNoInput);
+        
+        if (ogrenci) {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "#fff";
+            
+            let isletmeMetni = escapeHtml(ogrenci.isletme);
+            if (!isletmeMetni || isletmeMetni === "") {
+                let cikisTarihi = ogrenci.istenCikis !== "-" ? ` (${escapeHtml(ogrenci.istenCikis)})` : "";
+                isletmeMetni = `<span class="alert-text">KAYITLI İŞLETME YOK${cikisTarihi}</span>`;
+            }
+
+            sonucDiv.innerHTML = `
+                <span class="name-label">${escapeHtml(ogrenci.ad)}</span>
+                <div class="info-row"><span>T.C. No:</span> <b>${escapeHtml(ogrenci.tc)}</b></div>
+                <div class="info-row"><span>Öğrenci No:</span> <b>${escapeHtml(ogrenci.ogrNo)}</b></div>
+                <div class="info-row"><span>Şube:</span> <b>${escapeHtml(ogrenci.sube)}</b></div>
+                <div class="info-row"><span>Devamsızlık:</span> <b>${escapeHtml(ogrenci.devamsizlik)}</b></div>
+                <div class="info-row"><span>Dal:</span> <b>${escapeHtml(ogrenci.dal)}</b></div>
+                <div class="info-row"><span>Öğretmen:</span> <b>${escapeHtml(ogretmen)}</b></div>
+                <div class="info-row"><span>İşletme:</span> <b>${isletmeMetni}</b></div>
+                <div class="info-row"><span>İşe Giriş Tarihi:</span> <b>${escapeHtml(ogrenci.iseGiris)}</b></div>
+                <div class="info-row"><span>İşten Çıkış Tarihi:</span> <b>${escapeHtml(ogrenci.istenCikis)}</b></div>
+            `;
+        } else {
+            sonucDiv.style.display = "block";
+            sonucDiv.style.backgroundColor = "var(--danger)";
+            sonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ T.C. KİMLİK NO VEYA ÖĞRENCİ NO HATALI / KAYIT BULUNAMADI</div>";
+        }
+    }
+
+    function okulNoBul() {
+        const girilenTc = document.getElementById('tcNoBulInput').value.trim();
+        const noSonucDiv = document.getElementById('noSonuc');
+
+        if (girilenTc.length !== 11) {
+            noSonucDiv.style.display = "block";
+            noSonucDiv.style.backgroundColor = "var(--danger)";
+            noSonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>⚠️ T.C. KİMLİK NO TAM 11 HANELİ OLMALIDIR!</div>";
+            return;
+        }
+
+        const kayit = okulNoListesi.find(k => k.tc === girilenTc);
+
+        if (kayit) {
+            noSonucDiv.style.display = "block";
+            noSonucDiv.style.backgroundColor = "#fff";
+            noSonucDiv.innerHTML = `
+                <div style="text-align:center; color:#475569; font-weight:600; font-size:0.9rem;">ÖĞRENCİ NUMARANIZ</div>
+                <div class="ogr-no-badge">${escapeHtml(kayit.okulNo)}</div>
+                <button type="button" class="btn-use" onclick="numaraylaSorgula('${escapeHtml(kayit.tc)}', '${escapeHtml(kayit.okulNo)}')">✓ Bu Numarayla Sorgula</button>
+            `;
+        } else {
+            noSonucDiv.style.display = "block";
+            noSonucDiv.style.backgroundColor = "var(--danger)";
+            noSonucDiv.innerHTML = "<div style='text-align:center; color:#991b1b; font-weight:bold;'>❌ BU T.C. KİMLİK NUMARASINA AİT KAYIT BULUNAMADI</div>";
+        }
+    }
+
+    ['tcInput', 'ogrNoInput', 'tcNoBulInput'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    verileriGetir();
+    okulNoVerileriniGetir();
+</script>
+
+</body>
+</html>
